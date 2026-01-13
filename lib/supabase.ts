@@ -1,0 +1,40 @@
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Types for database tables
+export interface Volunteer {
+  id: string;
+  email: string;
+  name: string;
+  last_seen: string;
+  created_at: string;
+}
+
+export interface Conversation {
+  id: string;
+  phone_number: string;
+  contact_name: string;
+  detected_language: string;
+  archived: boolean;
+  last_message_at: string;
+  last_volunteer_id: string | null;
+  created_at: string;
+}
+
+export interface Message {
+  id: string;
+  conversation_id: string;
+  volunteer_id: string | null;
+  direction: 'inbound' | 'outbound';
+  original_text: string;
+  translated_text: string | null;
+  detected_language: string;
+  twilio_sid: string | null;
+  status: 'received' | 'sent' | 'failed';
+  error_message: string | null;
+  created_at: string;
+}
