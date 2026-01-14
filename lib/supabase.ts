@@ -8,11 +8,17 @@ export const supabase = (() => {
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
     if (!supabaseUrl || !supabaseAnonKey) {
-      // Return a dummy client during build time
-      return createClient('https://placeholder.supabase.co', 'placeholder-key');
-    }
+      console.error('❌ SUPABASE CONFIG ERROR: Missing environment variables');
+      console.error('NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl ? '✓ Set' : '✗ Missing');
+      console.error('NEXT_PUBLIC_SUPABASE_ANON_KEY:', supabaseAnonKey ? '✓ Set' : '✗ Missing');
+      console.warn('Creating placeholder client - app will not work correctly!');
 
-    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey);
+      // Create and cache the dummy client so it's consistent
+      supabaseInstance = createClient('https://placeholder.supabase.co', 'placeholder-key');
+    } else {
+      console.log('✓ Supabase client initialized successfully');
+      supabaseInstance = createClient(supabaseUrl, supabaseAnonKey);
+    }
   }
   return supabaseInstance;
 })();

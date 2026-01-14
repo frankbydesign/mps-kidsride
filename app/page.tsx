@@ -12,6 +12,8 @@ import type { User } from '@supabase/supabase-js';
 import type { Volunteer } from '@/lib/supabase';
 
 export default function Home() {
+  console.log('🏠 Home component rendering...');
+
   const [user, setUser] = useState<User | null>(null);
   const [volunteer, setVolunteer] = useState<Volunteer | null>(null);
   const [loading, setLoading] = useState(true);
@@ -20,39 +22,65 @@ export default function Home() {
   const [showAdminApproval, setShowAdminApproval] = useState(false);
 
   useEffect(() => {
+    console.log('🔄 Home component mounted, loading session...');
+
     // Check current session
     const loadSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
+      try {
+        console.log('📡 Fetching current session...');
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-      if (session?.user) {
-        // Fetch volunteer profile with error handling
-        const { data: volunteerData, error } = await supabase
-          .from('volunteers')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-
-        if (error) {
-          console.error('Error fetching volunteer profile:', error);
-          setVolunteer(null);
-        } else {
-          setVolunteer(volunteerData);
+        if (sessionError) {
+          console.error('❌ Session error:', sessionError);
+          setUser(null);
+          setLoading(false);
+          return;
         }
-      }
 
-      setLoading(false);
+        console.log('✓ Session fetched:', session ? 'User logged in' : 'No user');
+        setUser(session?.user ?? null);
+
+        if (session?.user) {
+          console.log('📡 Fetching volunteer profile for user:', session.user.id);
+
+          // Fetch volunteer profile with error handling
+          const { data: volunteerData, error } = await supabase
+            .from('volunteers')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+
+          if (error) {
+            console.error('❌ Error fetching volunteer profile:', error);
+            console.error('Error details:', { code: error.code, message: error.message, details: error.details });
+            setVolunteer(null);
+          } else {
+            console.log('✓ Volunteer profile loaded:', { approved: volunteerData?.approved, is_admin: volunteerData?.is_admin });
+            setVolunteer(volunteerData);
+          }
+        }
+
+        console.log('✓ Session load complete, setting loading to false');
+        setLoading(false);
+      } catch (err) {
+        console.error('❌ Unexpected error in loadSession:', err);
+        setLoading(false);
+      }
     };
 
     loadSession();
 
     // Listen for auth changes
+    console.log('🔔 Setting up auth state change listener...');
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('🔔 Auth state changed:', event, session ? 'User present' : 'No user');
       setUser(session?.user ?? null);
 
       if (session?.user) {
+        console.log('📡 Fetching volunteer profile after auth change for user:', session.user.id);
+
         // Fetch volunteer profile with error handling
         const { data: volunteerData, error } = await supabase
           .from('volunteers')
@@ -61,9 +89,10 @@ export default function Home() {
           .single();
 
         if (error) {
-          console.error('Error fetching volunteer profile:', error);
+          console.error('❌ Error fetching volunteer profile (auth change):', error);
           setVolunteer(null);
         } else {
+          console.log('✓ Volunteer profile loaded (auth change):', { approved: volunteerData?.approved, is_admin: volunteerData?.is_admin });
           setVolunteer(volunteerData);
         }
       } else {
@@ -107,6 +136,7 @@ export default function Home() {
   };
 
   if (loading) {
+    console.log('⏳ Rendering loading screen...');
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-gray-500">Loading...</div>
