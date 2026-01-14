@@ -2,7 +2,7 @@
 
 interface PendingApprovalProps {
   userEmail: string;
-  onSignOut: () => void;
+  onSignOut: () => void | Promise<void>;
 }
 
 export default function PendingApproval({ userEmail, onSignOut }: PendingApprovalProps) {

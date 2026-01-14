@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
 interface Volunteer {
@@ -17,9 +17,10 @@ interface VolunteerListProps {
 export default function VolunteerList({ currentUserId }: VolunteerListProps) {
   const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
 
-  useEffect(() => {
-    const supabase = createClient();
+  // Create singleton Supabase client to prevent AbortError from React Strict Mode
+  const supabase = useMemo(() => createClient(), []);
 
+  useEffect(() => {
     fetchVolunteers();
 
     // Subscribe to volunteer updates
@@ -48,7 +49,6 @@ export default function VolunteerList({ currentUserId }: VolunteerListProps) {
   }, []);
 
   const fetchVolunteers = async () => {
-    const supabase = createClient();
     const { data, error } = await supabase
       .from('volunteers')
       .select('*')
