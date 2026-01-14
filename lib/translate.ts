@@ -1,14 +1,20 @@
 import Anthropic from '@anthropic-ai/sdk';
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY!
-});
+/**
+ * Get or create Anthropic client instance
+ */
+function getAnthropicClient() {
+  return new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY!
+  });
+}
 
 /**
  * Detect the language of a text message
  */
 export async function detectLanguage(text: string): Promise<string> {
   try {
+    const anthropic = getAnthropicClient();
     const message = await anthropic.messages.create({
       model: 'claude-3-haiku-20240307',
       max_tokens: 50,
@@ -76,6 +82,7 @@ export async function translateMessage(
     const sourceName = languageNames[sourceLanguage] || sourceLanguage;
     const targetName = languageNames[targetLanguage] || targetLanguage;
 
+    const anthropic = getAnthropicClient();
     const message = await anthropic.messages.create({
       model: 'claude-3-haiku-20240307',
       max_tokens: 1000,
