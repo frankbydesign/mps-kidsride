@@ -1,25 +1,22 @@
-import { createClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
-let supabaseInstance: ReturnType<typeof createClient> | null = null;
+let supabaseInstance: SupabaseClient | null = null;
 
+// Lazy initialization to avoid issues during build
 export const supabase = (() => {
+  if (typeof window === 'undefined') {
+    // During SSR/build, return a dummy client
+    return {} as SupabaseClient;
+  }
+
   if (!supabaseInstance) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
-    if (!supabaseUrl || !supabaseAnonKey) {
-      console.error('❌ SUPABASE CONFIG ERROR: Missing environment variables');
-      console.error('NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl ? '✓ Set' : '✗ Missing');
-      console.error('NEXT_PUBLIC_SUPABASE_ANON_KEY:', supabaseAnonKey ? '✓ Set' : '✗ Missing');
-      console.warn('Creating placeholder client - app will not work correctly!');
-
-      // Create and cache the dummy client so it's consistent
-      supabaseInstance = createClient('https://placeholder.supabase.co', 'placeholder-key');
-    } else {
-      console.log('✓ Supabase client initialized successfully');
-      supabaseInstance = createClient(supabaseUrl, supabaseAnonKey);
-    }
+    supabaseInstance = createBrowserClient(supabaseUrl, supabaseAnonKey);
   }
+
   return supabaseInstance;
 })();
 
