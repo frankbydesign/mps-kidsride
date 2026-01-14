@@ -3,29 +3,62 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import AuthForm from '@/components/AuthForm';
+import PendingApproval from '@/components/PendingApproval';
+import AdminApproval from '@/components/AdminApproval';
 import ConversationList from '@/components/ConversationList';
 import MessageView from '@/components/MessageView';
 import VolunteerList from '@/components/VolunteerList';
 import type { User } from '@supabase/supabase-js';
+import type { Volunteer } from '@/lib/supabase';
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
+  const [volunteer, setVolunteer] = useState<Volunteer | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [showArchive, setShowArchive] = useState(false);
+  const [showAdminApproval, setShowAdminApproval] = useState(false);
 
   useEffect(() => {
     // Check current session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const loadSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user ?? null);
+
+      if (session?.user) {
+        // Fetch volunteer profile
+        const { data: volunteerData } = await supabase
+          .from('volunteers')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+
+        setVolunteer(volunteerData);
+      }
+
       setLoading(false);
-    });
+    };
+
+    loadSession();
 
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null);
+
+      if (session?.user) {
+        // Fetch volunteer profile
+        const { data: volunteerData } = await supabase
+          .from('volunteers')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+
+        setVolunteer(volunteerData);
+      } else {
+        setVolunteer(null);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -54,7 +87,9 @@ export default function Home() {
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
+    setVolunteer(null);
     setSelectedConversationId(null);
+    setShowAdminApproval(false);
   };
 
   if (loading) {
@@ -67,6 +102,16 @@ export default function Home() {
 
   if (!user) {
     return <AuthForm />;
+  }
+
+  // Show pending approval screen if volunteer is not approved
+  if (volunteer && !volunteer.approved) {
+    return <PendingApproval userEmail={user.email || ''} onSignOut={handleSignOut} />;
+  }
+
+  // Show admin approval interface if requested
+  if (showAdminApproval && volunteer?.is_admin) {
+    return <AdminApproval onClose={() => setShowAdminApproval(false)} />;
   }
 
   return (
@@ -84,6 +129,16 @@ export default function Home() {
               Sign Out
             </button>
           </div>
+
+          {/* Admin button */}
+          {volunteer?.is_admin && (
+            <button
+              onClick={() => setShowAdminApproval(true)}
+              className="w-full mb-4 bg-purple-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-colors text-sm"
+            >
+              Approve Volunteers
+            </button>
+          )}
 
           {/* Archive toggle */}
           <div className="flex gap-2">

@@ -8,6 +8,8 @@ create table volunteers (
   email text not null,
   display_name text,
   is_online boolean default false,
+  approved boolean default false,
+  is_admin boolean default false,
   last_seen timestamp with time zone default now(),
   created_at timestamp with time zone default now()
 );
@@ -94,37 +96,61 @@ create policy "Users can update their own volunteer profile"
   to authenticated
   using (auth.uid() = id);
 
--- Conversations: authenticated users can do everything
-create policy "Authenticated users can view conversations"
+-- Conversations: only approved volunteers can access
+create policy "Approved volunteers can view conversations"
   on conversations for select
   to authenticated
-  using (true);
+  using (exists (
+    select 1 from volunteers
+    where volunteers.id = auth.uid()
+    and volunteers.approved = true
+  ));
 
-create policy "Authenticated users can insert conversations"
+create policy "Approved volunteers can insert conversations"
   on conversations for insert
   to authenticated
-  with check (true);
+  with check (exists (
+    select 1 from volunteers
+    where volunteers.id = auth.uid()
+    and volunteers.approved = true
+  ));
 
-create policy "Authenticated users can update conversations"
+create policy "Approved volunteers can update conversations"
   on conversations for update
   to authenticated
-  using (true);
+  using (exists (
+    select 1 from volunteers
+    where volunteers.id = auth.uid()
+    and volunteers.approved = true
+  ));
 
--- Messages: authenticated users can do everything
-create policy "Authenticated users can view messages"
+-- Messages: only approved volunteers can access
+create policy "Approved volunteers can view messages"
   on messages for select
   to authenticated
-  using (true);
+  using (exists (
+    select 1 from volunteers
+    where volunteers.id = auth.uid()
+    and volunteers.approved = true
+  ));
 
-create policy "Authenticated users can insert messages"
+create policy "Approved volunteers can insert messages"
   on messages for insert
   to authenticated
-  with check (true);
+  with check (exists (
+    select 1 from volunteers
+    where volunteers.id = auth.uid()
+    and volunteers.approved = true
+  ));
 
-create policy "Authenticated users can update messages"
+create policy "Approved volunteers can update messages"
   on messages for update
   to authenticated
-  using (true);
+  using (exists (
+    select 1 from volunteers
+    where volunteers.id = auth.uid()
+    and volunteers.approved = true
+  ));
 
 -- ============================================
 -- SERVICE ROLE POLICIES (for webhook)
@@ -137,9 +163,22 @@ create policy "Authenticated users can update messages"
 -- ============================================
 create or replace function handle_new_user()
 returns trigger as $$
+declare
+  volunteer_count integer;
+  is_first_user boolean;
+  should_approve boolean;
+  should_be_admin boolean;
 begin
-  insert into public.volunteers (id, email, display_name)
-  values (new.id, new.email, split_part(new.email, '@', 1));
+  -- Check if this is the first user
+  select count(*) into volunteer_count from public.volunteers;
+  is_first_user := (volunteer_count = 0);
+
+  -- Make first user or frank@centerpointcorp.com an admin and auto-approve
+  should_be_admin := (is_first_user or new.email = 'frank@centerpointcorp.com');
+  should_approve := should_be_admin;
+
+  insert into public.volunteers (id, email, display_name, approved, is_admin)
+  values (new.id, new.email, split_part(new.email, '@', 1), should_approve, should_be_admin);
   return new;
 end;
 $$ language plpgsql security definer;
