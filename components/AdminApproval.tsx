@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import type { Volunteer } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
+import type { Volunteer } from '@/app/page';
 
 interface AdminApprovalProps {
   onClose: () => void;
@@ -14,6 +14,8 @@ export default function AdminApproval({ onClose }: AdminApprovalProps) {
   const [processingId, setProcessingId] = useState<string | null>(null);
 
   useEffect(() => {
+    const supabase = createClient();
+
     fetchPendingVolunteers();
 
     // Subscribe to volunteer changes
@@ -39,6 +41,7 @@ export default function AdminApproval({ onClose }: AdminApprovalProps) {
 
   const fetchPendingVolunteers = async () => {
     try {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from('volunteers')
         .select('*')
@@ -57,6 +60,7 @@ export default function AdminApproval({ onClose }: AdminApprovalProps) {
   const handleApprove = async (volunteerId: string) => {
     setProcessingId(volunteerId);
     try {
+      const supabase = createClient();
       const { error } = await (supabase
         .from('volunteers') as any)
         .update({ approved: true })
@@ -79,6 +83,7 @@ export default function AdminApproval({ onClose }: AdminApprovalProps) {
       return;
     }
 
+    const supabase = createClient();
     setProcessingId(volunteerId);
     try {
       // Delete the volunteer record (will cascade to auth.users)

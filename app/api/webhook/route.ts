@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import twilio from 'twilio';
-import { createClient } from '@supabase/supabase-js';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { translateMessage, detectLanguage } from '@/lib/translate';
 
 export async function POST(request: NextRequest) {
   try {
-    // Use service role key to bypass RLS
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    // Use admin client singleton for better performance
+    const supabaseAdmin = createAdminClient();
 
     // Get the raw body for signature verification
     const body = await request.text();
@@ -56,8 +53,8 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (!conversation) {
-      const { data: newConversation, error: convError } = await supabaseAdmin
-        .from('conversations')
+      const { data: newConversation, error: convError } = await (supabaseAdmin
+        .from('conversations') as any)
         .insert({
           phone_number: from,
           contact_name: from,
@@ -75,19 +72,19 @@ export async function POST(request: NextRequest) {
       conversation = newConversation;
     } else {
       // Update detected language if needed
-      if (conversation.detected_language !== detectedLanguage) {
-        await supabaseAdmin
-          .from('conversations')
+      if ((conversation as any).detected_language !== detectedLanguage) {
+        await (supabaseAdmin
+          .from('conversations') as any)
           .update({ detected_language: detectedLanguage })
-          .eq('id', conversation.id);
+          .eq('id', (conversation as any).id);
       }
     }
 
     // Save message
-    const { error: messageError } = await supabaseAdmin
-      .from('messages')
+    const { error: messageError } = await (supabaseAdmin
+      .from('messages') as any)
       .insert({
-        conversation_id: conversation.id,
+        conversation_id: (conversation as any).id,
         direction: 'inbound',
         original_text: body_text,
         translated_text: detectedLanguage !== 'en' ? translatedText : null,
@@ -102,10 +99,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Update conversation's last message time
-    await supabaseAdmin
-      .from('conversations')
+    await (supabaseAdmin
+      .from('conversations') as any)
       .update({ last_reply_at: new Date().toISOString() })
-      .eq('id', conversation.id);
+      .eq('id', (conversation as any).id);
 
     // Return TwiML response
     return new NextResponse(

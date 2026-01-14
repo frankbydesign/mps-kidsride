@@ -1,47 +1,35 @@
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+/**
+ * Auth callback route handler for OAuth and magic link flows
+ * Exchanges the authorization code for a user session
+ */
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
+  const next = requestUrl.searchParams.get('next') ?? '/';
   const origin = requestUrl.origin;
 
   if (code) {
-    const cookieStore = cookies();
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+    const supabase = await createClient();
 
-    const supabase = createServerClient(
-      supabaseUrl,
-      supabaseAnonKey,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value;
-          },
-          set(name: string, value: string, options: any) {
-            try {
-              cookieStore.set({ name, value, ...options });
-            } catch (error) {
-              // Handle cookie setting errors in middleware
-            }
-          },
-          remove(name: string, options: any) {
-            try {
-              cookieStore.set({ name, value: '', ...options });
-            } catch (error) {
-              // Handle cookie removal errors in middleware
-            }
-          },
-        },
-      }
-    );
+    // Exchange the code for a session
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
 
-    await supabase.auth.exchangeCodeForSession(code);
+    if (error) {
+      console.error('Auth callback error:', error);
+      // Redirect to home with error message (home page will show auth form)
+      return NextResponse.redirect(
+        `${origin}/?error=${encodeURIComponent(error.message)}`
+      );
+    }
+
+    // Successful authentication - redirect to the next URL or home
+    return NextResponse.redirect(`${origin}${next}`);
   }
 
-  // Redirect to home page after successful authentication
-  return NextResponse.redirect(`${origin}/`);
+  // No code present - redirect to home
+  return NextResponse.redirect(`${origin}/?error=No+authorization+code+provided`);
 }

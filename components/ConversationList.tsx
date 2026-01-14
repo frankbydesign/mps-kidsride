@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 
 interface Conversation {
   id: string;
@@ -29,6 +29,8 @@ export default function ConversationList({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const supabase = createClient();
+
     fetchConversations();
 
     // Subscribe to conversation changes
@@ -53,6 +55,7 @@ export default function ConversationList({
   }, []);
 
   const fetchConversations = async () => {
+    const supabase = createClient();
     const { data, error } = await supabase
       .from('conversations')
       .select('*, volunteers:last_reply_by(display_name)')
@@ -68,6 +71,7 @@ export default function ConversationList({
   };
 
   const handleResolve = async (id: string) => {
+    const supabase = createClient();
     const { error } = await (supabase
       .from('conversations') as any)
       .update({ status: 'resolved' })

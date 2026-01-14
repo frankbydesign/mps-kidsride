@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 
 export default function AuthForm() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -20,6 +20,7 @@ export default function AuthForm() {
     setLoading(true);
 
     try {
+      const supabase = createClient();
       const redirectUrl = `${window.location.origin}/auth/callback`;
 
       if (useMagicLink) {
@@ -33,7 +34,7 @@ export default function AuthForm() {
 
         if (magicLinkError) throw magicLinkError;
 
-        setSuccessMessage('Check your email for the magic link!');
+        setSuccessMessage('Check your email for the magic link! It will be valid for 60 minutes.');
       } else if (isSignUp) {
         // Sign up - volunteer profile is auto-created by database trigger
         const { error: signUpError } = await supabase.auth.signUp({
@@ -49,7 +50,7 @@ export default function AuthForm() {
 
         if (signUpError) throw signUpError;
 
-        setSuccessMessage('Account created! Check your email to confirm.');
+        setSuccessMessage('Account created! Check your email to confirm your account.');
       } else {
         // Sign in with password
         const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -58,10 +59,20 @@ export default function AuthForm() {
         });
 
         if (signInError) throw signInError;
+
+        // Successful sign in - redirect to home
+        window.location.href = '/';
       }
     } catch (err: any) {
       console.error('Auth error:', err);
-      setError(err.message || 'An error occurred');
+      // Provide more specific error messages
+      if (err.message?.includes('Invalid login credentials')) {
+        setError('Invalid email or password. Please try again.');
+      } else if (err.message?.includes('Email not confirmed')) {
+        setError('Please confirm your email address before signing in.');
+      } else {
+        setError(err.message || 'An error occurred during authentication');
+      }
     } finally {
       setLoading(false);
     }
