@@ -1,24 +1,12 @@
 import { createBrowserClient } from '@supabase/ssr';
-import type { SupabaseClient } from '@supabase/supabase-js';
 
-let supabaseInstance: SupabaseClient | null = null;
+// Create client once at module load time
+// createBrowserClient from @supabase/ssr handles singleton pattern internally
+// and is safe to call during SSR/build with placeholder values
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
 
-// Lazy initialization to avoid issues during build
-export const supabase = (() => {
-  if (typeof window === 'undefined') {
-    // During SSR/build, return a dummy client
-    return {} as SupabaseClient;
-  }
-
-  if (!supabaseInstance) {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-
-    supabaseInstance = createBrowserClient(supabaseUrl, supabaseAnonKey);
-  }
-
-  return supabaseInstance;
-})();
+export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
 
 // Types for database tables
 export interface Volunteer {
