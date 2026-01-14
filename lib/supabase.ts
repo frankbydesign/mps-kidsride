@@ -22,6 +22,10 @@ export interface Volunteer {
   id: string;
   email: string;
   name: string;
+  display_name?: string;
+  is_online?: boolean;
+  approved: boolean;
+  is_admin: boolean;
   last_seen: string;
   created_at: string;
 }

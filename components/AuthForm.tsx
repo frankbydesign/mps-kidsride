@@ -18,32 +18,18 @@ export default function AuthForm() {
 
     try {
       if (isSignUp) {
-        // Sign up
-        const { data, error: signUpError } = await supabase.auth.signUp({
+        // Sign up - volunteer profile is auto-created by database trigger
+        const { error: signUpError } = await supabase.auth.signUp({
           email,
           password,
           options: {
             data: {
-              name: name || email.split('@')[0]
+              display_name: name || email.split('@')[0]
             }
           }
         });
 
         if (signUpError) throw signUpError;
-
-        if (data.user) {
-          // Create volunteer profile
-          const { error: profileError } = await supabase
-            .from('volunteers')
-            .insert({
-              id: data.user.id,
-              email: data.user.email!,
-              name: name || email.split('@')[0],
-              last_seen: new Date().toISOString()
-            });
-
-          if (profileError) throw profileError;
-        }
       } else {
         // Sign in
         const { error: signInError } = await supabase.auth.signInWithPassword({
