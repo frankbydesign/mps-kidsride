@@ -122,43 +122,9 @@ export default function Home() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Subscribe to volunteer profile changes (for real-time approval updates)
-  useEffect(() => {
-    if (!user?.id) return;
-
-    console.log('🔔 Setting up volunteer profile subscription for real-time approval updates...');
-
-    const supabase = createClient();
-    const volunteerSubscription = supabase
-      .channel('volunteer-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'volunteers',
-          filter: `id=eq.${user.id}`
-        },
-        async (payload) => {
-          console.log('🔔 Volunteer profile updated:', payload);
-          const updatedVolunteer = payload.new as Volunteer;
-
-          // Update volunteer state immediately
-          setVolunteer(updatedVolunteer);
-
-          // If user just got approved, show a notification
-          if (updatedVolunteer.approved && !volunteer?.approved) {
-            console.log('✅ Volunteer approved! Reloading interface...');
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      console.log('🔕 Unsubscribing from volunteer profile updates');
-      volunteerSubscription.unsubscribe();
-    };
-  }, [user?.id, volunteer?.approved]);
+  // Real-time subscription temporarily removed to fix auth hang
+  // Will re-add once basic auth is working properly
+  // For now, volunteer profile is fetched on initial load and auth changes
 
   // Update volunteer presence
   // TODO: Fix TypeScript type inference issues with Supabase update
