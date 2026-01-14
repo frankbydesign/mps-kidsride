@@ -26,14 +26,19 @@ export default function Home() {
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        // Fetch volunteer profile
-        const { data: volunteerData } = await supabase
+        // Fetch volunteer profile with error handling
+        const { data: volunteerData, error } = await supabase
           .from('volunteers')
           .select('*')
           .eq('id', session.user.id)
           .single();
 
-        setVolunteer(volunteerData);
+        if (error) {
+          console.error('Error fetching volunteer profile:', error);
+          setVolunteer(null);
+        } else {
+          setVolunteer(volunteerData);
+        }
       }
 
       setLoading(false);
@@ -48,14 +53,19 @@ export default function Home() {
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        // Fetch volunteer profile
-        const { data: volunteerData } = await supabase
+        // Fetch volunteer profile with error handling
+        const { data: volunteerData, error } = await supabase
           .from('volunteers')
           .select('*')
           .eq('id', session.user.id)
           .single();
 
-        setVolunteer(volunteerData);
+        if (error) {
+          console.error('Error fetching volunteer profile:', error);
+          setVolunteer(null);
+        } else {
+          setVolunteer(volunteerData);
+        }
       } else {
         setVolunteer(null);
       }
@@ -66,13 +76,17 @@ export default function Home() {
 
   // Update volunteer presence
   useEffect(() => {
-    if (!user) return;
+    if (!user || !volunteer?.approved) return;
 
     const updatePresence = async () => {
-      await supabase
+      const { error } = await supabase
         .from('volunteers')
         .update({ last_seen: new Date().toISOString() })
         .eq('id', user.id);
+
+      if (error) {
+        console.error('Error updating presence:', error);
+      }
     };
 
     // Update immediately
@@ -82,7 +96,7 @@ export default function Home() {
     const interval = setInterval(updatePresence, 30000);
 
     return () => clearInterval(interval);
-  }, [user]);
+  }, [user, volunteer]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -104,8 +118,17 @@ export default function Home() {
     return <AuthForm />;
   }
 
+  // If volunteer record doesn't exist, show loading
+  if (!volunteer) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-gray-500">Setting up your account...</div>
+      </div>
+    );
+  }
+
   // Show pending approval screen if volunteer is not approved
-  if (volunteer && !volunteer.approved) {
+  if (!volunteer.approved) {
     return <PendingApproval userEmail={user.email || ''} onSignOut={handleSignOut} />;
   }
 
