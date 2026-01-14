@@ -44,7 +44,7 @@ export default function Home() {
           console.log('📡 Fetching volunteer profile for user:', session.user.id);
 
           // Fetch volunteer profile with error handling
-          const { data: volunteerData, error } = await supabase
+          const { data, error } = await supabase
             .from('volunteers')
             .select('*')
             .eq('id', session.user.id)
@@ -54,9 +54,12 @@ export default function Home() {
             console.error('❌ Error fetching volunteer profile:', error);
             console.error('Error details:', { code: error.code, message: error.message, details: error.details });
             setVolunteer(null);
+          } else if (data) {
+            console.log('✓ Volunteer profile loaded:', { approved: data.approved, is_admin: data.is_admin });
+            setVolunteer(data as Volunteer);
           } else {
-            console.log('✓ Volunteer profile loaded:', { approved: volunteerData?.approved, is_admin: volunteerData?.is_admin });
-            setVolunteer(volunteerData);
+            console.warn('⚠️ No volunteer data returned');
+            setVolunteer(null);
           }
         }
 
@@ -82,7 +85,7 @@ export default function Home() {
         console.log('📡 Fetching volunteer profile after auth change for user:', session.user.id);
 
         // Fetch volunteer profile with error handling
-        const { data: volunteerData, error } = await supabase
+        const { data, error } = await supabase
           .from('volunteers')
           .select('*')
           .eq('id', session.user.id)
@@ -91,9 +94,12 @@ export default function Home() {
         if (error) {
           console.error('❌ Error fetching volunteer profile (auth change):', error);
           setVolunteer(null);
+        } else if (data) {
+          console.log('✓ Volunteer profile loaded (auth change):', { approved: data.approved, is_admin: data.is_admin });
+          setVolunteer(data as Volunteer);
         } else {
-          console.log('✓ Volunteer profile loaded (auth change):', { approved: volunteerData?.approved, is_admin: volunteerData?.is_admin });
-          setVolunteer(volunteerData);
+          console.warn('⚠️ No volunteer data returned (auth change)');
+          setVolunteer(null);
         }
       } else {
         setVolunteer(null);
