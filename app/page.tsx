@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import AuthForm from '@/components/AuthForm';
 import PendingApproval from '@/components/PendingApproval';
@@ -32,10 +32,12 @@ export default function Home() {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [showAdminApproval, setShowAdminApproval] = useState(false);
 
+  // Create Supabase client once and reuse across all hooks
+  // This prevents AbortError issues from React Strict Mode double-mounting
+  const supabase = useMemo(() => createClient(), []);
+
   useEffect(() => {
     console.log('🔄 Home component mounted, loading session...');
-
-    const supabase = createClient();
 
     // Check current session
     const loadSession = async () => {
@@ -155,7 +157,6 @@ export default function Home() {
   */
 
   const handleSignOut = async () => {
-    const supabase = createClient();
     await supabase.auth.signOut();
     setUser(null);
     setVolunteer(null);
