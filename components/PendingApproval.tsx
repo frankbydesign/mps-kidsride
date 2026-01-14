@@ -1,7 +1,5 @@
 'use client';
 
-import { supabase } from '@/lib/supabase';
-
 interface PendingApprovalProps {
   userEmail: string;
   onSignOut: () => void;

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 import AuthForm from '@/components/AuthForm';
 import PendingApproval from '@/components/PendingApproval';
 import AdminApproval from '@/components/AdminApproval';
@@ -9,7 +9,19 @@ import ConversationList from '@/components/ConversationList';
 import MessageView from '@/components/MessageView';
 import VolunteerList from '@/components/VolunteerList';
 import type { User } from '@supabase/supabase-js';
-import type { Volunteer } from '@/lib/supabase';
+
+// Types for database tables
+export interface Volunteer {
+  id: string;
+  email: string;
+  name: string;
+  display_name?: string;
+  is_online?: boolean;
+  approved: boolean;
+  is_admin: boolean;
+  last_seen: string;
+  created_at: string;
+}
 
 export default function Home() {
   console.log('🏠 Home component rendering...');
@@ -22,6 +34,8 @@ export default function Home() {
 
   useEffect(() => {
     console.log('🔄 Home component mounted, loading session...');
+
+    const supabase = createClient();
 
     // Check current session
     const loadSession = async () => {
@@ -114,6 +128,7 @@ export default function Home() {
 
     console.log('🔔 Setting up volunteer profile subscription for real-time approval updates...');
 
+    const supabase = createClient();
     const volunteerSubscription = supabase
       .channel('volunteer-updates')
       .on(
@@ -174,6 +189,7 @@ export default function Home() {
   */
 
   const handleSignOut = async () => {
+    const supabase = createClient();
     await supabase.auth.signOut();
     setUser(null);
     setVolunteer(null);

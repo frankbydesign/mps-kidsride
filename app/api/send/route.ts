@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import twilio from 'twilio';
-import { createClient } from '@supabase/supabase-js';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { translateMessage } from '@/lib/translate';
 
 export async function POST(request: NextRequest) {
   try {
-    // Use service role key for admin operations
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    // Use admin client singleton for better performance
+    const supabaseAdmin = createAdminClient();
 
     // Initialize Twilio client
     const twilioClient = twilio(
@@ -42,7 +39,7 @@ export async function POST(request: NextRequest) {
 
     // Translate message if needed
     let textToSend = message;
-    const targetLanguage = conversation.detected_language || 'en';
+    const targetLanguage = (conversation as any).detected_language || 'en';
 
     if (targetLanguage !== 'en') {
       textToSend = await translateMessage(message, 'en', targetLanguage);
@@ -57,7 +54,7 @@ export async function POST(request: NextRequest) {
         twilioMessage = await twilioClient.messages.create({
           body: textToSend,
           from: process.env.TWILIO_PHONE_NUMBER!,
-          to: conversation.phone_number
+          to: (conversation as any).phone_number
         });
         break; // Success
       } catch (error: any) {
@@ -73,8 +70,8 @@ export async function POST(request: NextRequest) {
 
     // Save message to database
     const messageStatus = twilioMessage ? 'sent' : 'failed';
-    const { data: savedMessage, error: messageError } = await supabaseAdmin
-      .from('messages')
+    const { data: savedMessage, error: messageError } = await (supabaseAdmin
+      .from('messages') as any)
       .insert({
         conversation_id: conversationId,
         volunteer_id: userId,
@@ -98,8 +95,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Update conversation
-    await supabaseAdmin
-      .from('conversations')
+    await (supabaseAdmin
+      .from('conversations') as any)
       .update({
         last_reply_at: new Date().toISOString(),
         last_reply_by: userId
