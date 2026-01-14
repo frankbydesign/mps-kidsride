@@ -41,10 +41,12 @@ export interface Conversation {
   phone_number: string;
   contact_name: string;
   detected_language: string;
-  archived: boolean;
-  last_message_at: string;
-  last_volunteer_id: string | null;
+  status: string;
+  last_reply_at: string | null;
+  last_reply_by: string | null;
+  assigned_volunteer_id: string | null;
   created_at: string;
+  updated_at: string;
 }
 
 export interface Message {

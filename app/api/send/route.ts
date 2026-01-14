@@ -101,8 +101,8 @@ export async function POST(request: NextRequest) {
     await supabaseAdmin
       .from('conversations')
       .update({
-        last_message_at: new Date().toISOString(),
-        last_volunteer_id: userId
+        last_reply_at: new Date().toISOString(),
+        last_reply_by: userId
       })
       .eq('id', conversationId);
 

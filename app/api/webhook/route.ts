@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
           phone_number: from,
           contact_name: from,
           detected_language: detectedLanguage,
-          archived: false
+          status: 'new'
         })
         .select()
         .single();
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
     // Update conversation's last message time
     await supabaseAdmin
       .from('conversations')
-      .update({ last_message_at: new Date().toISOString() })
+      .update({ last_reply_at: new Date().toISOString() })
       .eq('id', conversation.id);
 
     // Return TwiML response
