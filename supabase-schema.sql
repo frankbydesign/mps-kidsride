@@ -58,6 +58,11 @@ create index idx_conversations_status on conversations(status);
 create index idx_messages_status on messages(status);
 create index idx_volunteers_online on volunteers(is_online);
 
+-- Critical indexes for RLS policy performance
+-- These dramatically speed up the approval checks in every RLS policy
+create index idx_volunteers_id_approved on volunteers(id, approved);
+create index idx_volunteers_approved on volunteers(approved) where approved = true;
+
 -- Auto-update updated_at timestamp
 create or replace function update_updated_at()
 returns trigger as $$

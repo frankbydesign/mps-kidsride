@@ -7,25 +7,23 @@ interface Conversation {
   id: string;
   phone_number: string;
   contact_name: string;
-  last_message_at: string;
-  archived: boolean;
+  last_reply_at: string | null;
+  status: string;
   detected_language: string;
-  last_volunteer_id: string | null;
-  volunteers?: { name: string };
+  last_reply_by: string | null;
+  volunteers?: { display_name: string };
 }
 
 interface ConversationListProps {
   userId: string;
   selectedId: string | null;
   onSelect: (id: string) => void;
-  showArchive: boolean;
 }
 
 export default function ConversationList({
   userId,
   selectedId,
-  onSelect,
-  showArchive
+  onSelect
 }: ConversationListProps) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,14 +50,14 @@ export default function ConversationList({
     return () => {
       subscription.unsubscribe();
     };
-  }, [showArchive]);
+  }, []);
 
   const fetchConversations = async () => {
     const { data, error } = await supabase
       .from('conversations')
-      .select('*, volunteers:last_volunteer_id(name)')
-      .eq('archived', showArchive)
-      .order('last_message_at', { ascending: false });
+      .select('*, volunteers:last_reply_by(display_name)')
+      .neq('status', 'resolved')
+      .order('last_reply_at', { ascending: false, nullsFirst: false });
 
     if (error) {
       console.error('Error fetching conversations:', error);
@@ -69,14 +67,14 @@ export default function ConversationList({
     setLoading(false);
   };
 
-  const handleArchiveToggle = async (id: string, currentArchived: boolean) => {
+  const handleResolve = async (id: string) => {
     const { error } = await (supabase
       .from('conversations') as any)
-      .update({ archived: !currentArchived })
+      .update({ status: 'resolved' })
       .eq('id', id);
 
     if (error) {
-      console.error('Error toggling archive:', error);
+      console.error('Error resolving conversation:', error);
     } else {
       fetchConversations();
       if (selectedId === id) {
@@ -112,9 +110,9 @@ export default function ConversationList({
     return (
       <div className="flex-1 flex items-center justify-center p-4">
         <div className="text-center text-gray-500">
-          <p>{showArchive ? 'No archived conversations' : 'No active conversations'}</p>
+          <p>No active conversations</p>
           <p className="text-sm mt-1">
-            {!showArchive && "Messages will appear here when parents text"}
+            Messages will appear here when parents text
           </p>
         </div>
       </div>
@@ -148,22 +146,24 @@ export default function ConversationList({
               </p>
               {conversation.volunteers && (
                 <p className="text-xs text-gray-400 mt-1">
-                  Last reply: {conversation.volunteers.name}
+                  Last reply: {conversation.volunteers.display_name}
                 </p>
               )}
             </div>
             <div className="flex flex-col items-end gap-2 ml-2">
-              <span className="text-xs text-gray-500">
-                {formatTime(conversation.last_message_at)}
-              </span>
+              {conversation.last_reply_at && (
+                <span className="text-xs text-gray-500">
+                  {formatTime(conversation.last_reply_at)}
+                </span>
+              )}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleArchiveToggle(conversation.id, conversation.archived);
+                  handleResolve(conversation.id);
                 }}
-                className="text-xs text-gray-600 hover:text-gray-900"
+                className="text-xs text-green-600 hover:text-green-800"
               >
-                {conversation.archived ? 'Unarchive' : 'Archive'}
+                Resolve
               </button>
             </div>
           </div>

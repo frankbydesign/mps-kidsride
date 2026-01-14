@@ -18,7 +18,6 @@ export default function Home() {
   const [volunteer, setVolunteer] = useState<Volunteer | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
-  const [showArchive, setShowArchive] = useState(false);
   const [showAdminApproval, setShowAdminApproval] = useState(false);
 
   useEffect(() => {
@@ -108,6 +107,43 @@ export default function Home() {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Subscribe to volunteer profile changes (for real-time approval updates)
+  useEffect(() => {
+    if (!user?.id) return;
+
+    console.log('🔔 Setting up volunteer profile subscription for real-time approval updates...');
+
+    const volunteerSubscription = supabase
+      .channel('volunteer-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'volunteers',
+          filter: `id=eq.${user.id}`
+        },
+        async (payload) => {
+          console.log('🔔 Volunteer profile updated:', payload);
+          const updatedVolunteer = payload.new as Volunteer;
+
+          // Update volunteer state immediately
+          setVolunteer(updatedVolunteer);
+
+          // If user just got approved, show a notification
+          if (updatedVolunteer.approved && !volunteer?.approved) {
+            console.log('✅ Volunteer approved! Reloading interface...');
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('🔕 Unsubscribing from volunteer profile updates');
+      volunteerSubscription.unsubscribe();
+    };
+  }, [user?.id, volunteer?.approved]);
 
   // Update volunteer presence
   // TODO: Fix TypeScript type inference issues with Supabase update
@@ -202,30 +238,6 @@ export default function Home() {
               Approve Volunteers
             </button>
           )}
-
-          {/* Archive toggle */}
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowArchive(false)}
-              className={`flex-1 py-2 px-3 rounded text-sm font-medium ${
-                !showArchive
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              Active
-            </button>
-            <button
-              onClick={() => setShowArchive(true)}
-              className={`flex-1 py-2 px-3 rounded text-sm font-medium ${
-                showArchive
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              Archive
-            </button>
-          </div>
         </div>
 
         {/* Conversation list */}
@@ -233,7 +245,6 @@ export default function Home() {
           userId={user.id}
           selectedId={selectedConversationId}
           onSelect={setSelectedConversationId}
-          showArchive={showArchive}
         />
 
         {/* Volunteer presence */}
