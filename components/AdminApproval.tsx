@@ -57,8 +57,8 @@ export default function AdminApproval({ onClose }: AdminApprovalProps) {
   const handleApprove = async (volunteerId: string) => {
     setProcessingId(volunteerId);
     try {
-      const { error } = await supabase
-        .from('volunteers')
+      const { error } = await (supabase
+        .from('volunteers') as any)
         .update({ approved: true })
         .eq('id', volunteerId);
 

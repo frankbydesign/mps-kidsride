@@ -70,8 +70,8 @@ export default function ConversationList({
   };
 
   const handleArchiveToggle = async (id: string, currentArchived: boolean) => {
-    const { error } = await supabase
-      .from('conversations')
+    const { error } = await (supabase
+      .from('conversations') as any)
       .update({ archived: !currentArchived })
       .eq('id', id);
 

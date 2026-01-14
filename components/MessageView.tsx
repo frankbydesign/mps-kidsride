@@ -81,9 +81,9 @@ export default function MessageView({
 
     if (error) {
       console.error('Error fetching conversation:', error);
-    } else {
-      setConversation(data);
-      setEditedName(data.contact_name);
+    } else if (data) {
+      setConversation(data as any);
+      setEditedName((data as any).contact_name);
     }
   };
 
@@ -173,8 +173,8 @@ export default function MessageView({
   const handleNameSave = async () => {
     if (!conversation || !editedName.trim()) return;
 
-    const { error } = await supabase
-      .from('conversations')
+    const { error } = await (supabase
+      .from('conversations') as any)
       .update({ contact_name: editedName.trim() })
       .eq('id', conversationId);
 
