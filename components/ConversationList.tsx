@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
 interface Conversation {
@@ -28,9 +28,10 @@ export default function ConversationList({
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const supabase = createClient();
+  // Create singleton Supabase client to prevent AbortError from React Strict Mode
+  const supabase = useMemo(() => createClient(), []);
 
+  useEffect(() => {
     fetchConversations();
 
     // Subscribe to conversation changes
@@ -55,7 +56,6 @@ export default function ConversationList({
   }, []);
 
   const fetchConversations = async () => {
-    const supabase = createClient();
     const { data, error } = await supabase
       .from('conversations')
       .select('*, volunteers:last_reply_by(display_name)')
@@ -71,7 +71,6 @@ export default function ConversationList({
   };
 
   const handleResolve = async (id: string) => {
-    const supabase = createClient();
     const { error } = await (supabase
       .from('conversations') as any)
       .update({ status: 'resolved' })

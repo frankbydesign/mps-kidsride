@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
 interface Message {
@@ -42,8 +42,10 @@ export default function MessageView({
   const [editedName, setEditedName] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Create singleton Supabase client to prevent AbortError from React Strict Mode
+  const supabase = useMemo(() => createClient(), []);
+
   useEffect(() => {
-    const supabase = createClient();
 
     fetchConversation();
     fetchMessages();
@@ -75,7 +77,6 @@ export default function MessageView({
   }, [messages]);
 
   const fetchConversation = async () => {
-    const supabase = createClient();
     const { data, error } = await supabase
       .from('conversations')
       .select('*')
@@ -91,7 +92,6 @@ export default function MessageView({
   };
 
   const fetchMessages = async () => {
-    const supabase = createClient();
     const { data, error } = await supabase
       .from('messages')
       .select('*, volunteers:volunteer_id(name)')
@@ -162,7 +162,6 @@ export default function MessageView({
       }
 
       // Delete the failed message
-      const supabase = createClient();
       await supabase
         .from('messages')
         .delete()
@@ -178,7 +177,6 @@ export default function MessageView({
   const handleNameSave = async () => {
     if (!conversation || !editedName.trim()) return;
 
-    const supabase = createClient();
     const { error } = await (supabase
       .from('conversations') as any)
       .update({ contact_name: editedName.trim() })
