@@ -4,6 +4,9 @@ import AuthForm from '@/components/AuthForm';
 import PendingApproval from '@/components/PendingApproval';
 import Dashboard from '@/components/Dashboard';
 
+// Force dynamic rendering to prevent caching of auth state
+export const dynamic = 'force-dynamic';
+
 // Types for database tables
 export interface Volunteer {
   id: string;
@@ -24,8 +27,9 @@ export default async function Home() {
   const { data } = await supabase.auth.getClaims();
   const user = data?.claims;
 
-  // No user - show auth form
-  if (!user) {
+  // No user or missing sub claim - show auth form
+  // Note: sub (subject) is a required JWT claim containing the user ID
+  if (!user || !user.sub) {
     return <AuthForm />;
   }
 

@@ -13,7 +13,8 @@ export async function POST(request: NextRequest) {
     const { data } = await supabaseServer.auth.getClaims();
     const user = data?.claims;
 
-    if (!user) {
+    // Verify user has valid session with sub claim (user ID)
+    if (!user || !user.sub) {
       return NextResponse.json(
         { error: 'Unauthorized - Please sign in' },
         { status: 401 }
