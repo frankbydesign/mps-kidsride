@@ -96,6 +96,7 @@ export default function MessageView({
       .from('messages')
       .select('*, volunteers:volunteer_id(name)')
       .eq('conversation_id', conversationId)
+      .neq('status', 'superseded')  // Filter out superseded messages
       .order('created_at', { ascending: true });
 
     if (error) {
@@ -161,10 +162,10 @@ export default function MessageView({
         throw new Error('Failed to retry');
       }
 
-      // Delete the failed message
-      await supabase
-        .from('messages')
-        .delete()
+      // Mark the failed message as superseded instead of deleting
+      await (supabase
+        .from('messages') as any)
+        .update({ status: 'superseded' })
         .eq('id', messageId);
 
       fetchMessages();

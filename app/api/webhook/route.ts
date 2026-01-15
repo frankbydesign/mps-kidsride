@@ -33,16 +33,38 @@ export async function POST(request: NextRequest) {
     const body_text = params.get('Body');
     const messageSid = params.get('MessageSid');
 
+    // Validate required fields
     if (!from || !body_text) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Detect language and translate if not English
-    const detectedLanguage = await detectLanguage(body_text);
-    let translatedText = body_text;
+    // Validate phone number format (E.164)
+    const phoneRegex = /^\+[1-9]\d{1,14}$/;
+    if (!phoneRegex.test(from)) {
+      console.error('Invalid phone number format:', from);
+      return NextResponse.json({ error: 'Invalid phone number format' }, { status: 400 });
+    }
 
-    if (detectedLanguage !== 'en') {
-      translatedText = await translateMessage(body_text, detectedLanguage, 'en');
+    // Validate message length
+    if (body_text.length === 0 || body_text.length > 1600) {
+      return NextResponse.json({ error: 'Invalid message length' }, { status: 400 });
+    }
+
+    // Detect language and translate if not English
+    let detectedLanguage = 'en';
+    let translatedText = body_text;
+    let translationError = null;
+
+    try {
+      detectedLanguage = await detectLanguage(body_text);
+
+      if (detectedLanguage !== 'en') {
+        translatedText = await translateMessage(body_text, detectedLanguage, 'en');
+      }
+    } catch (error: any) {
+      console.error('Translation error:', error);
+      translationError = error.message || 'Translation failed';
+      // Continue processing - save message without translation
     }
 
     // Find or create conversation
@@ -90,7 +112,8 @@ export async function POST(request: NextRequest) {
         translated_text: detectedLanguage !== 'en' ? translatedText : null,
         detected_language: detectedLanguage,
         twilio_sid: messageSid,
-        status: 'received'
+        status: 'received',
+        translation_error: translationError
       });
 
     if (messageError) {
