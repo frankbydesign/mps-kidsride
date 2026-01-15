@@ -1,10 +1,47 @@
 import { NextRequest, NextResponse } from 'next/server';
 import twilio from 'twilio';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 import { translateMessage } from '@/lib/translate';
 
 export async function POST(request: NextRequest) {
   try {
+    // CRITICAL: Authenticate user before allowing SMS send
+    const supabaseServer = await createClient();
+    const { data } = await supabaseServer.auth.getClaims();
+    const user = data?.claims;
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized - Please sign in' },
+        { status: 401 }
+      );
+    }
+
+    // Verify user is an approved volunteer
+    const { data: volunteer, error: volunteerError } = await supabaseServer
+      .from('volunteers')
+      .select('approved')
+      .eq('id', user.sub)
+      .single();
+
+    if (volunteerError || !volunteer?.approved) {
+      return NextResponse.json(
+        { error: 'Forbidden - Volunteer approval required' },
+        { status: 403 }
+      );
+    }
+
+    const { conversationId, message, userId } = await request.json();
+
+    // Verify userId in request matches authenticated user
+    if (userId !== user.sub) {
+      return NextResponse.json(
+        { error: 'Forbidden - User ID mismatch' },
+        { status: 403 }
+      );
+    }
+
     // Use admin client singleton for better performance
     const supabaseAdmin = createAdminClient();
 
@@ -14,11 +51,24 @@ export async function POST(request: NextRequest) {
       process.env.TWILIO_AUTH_TOKEN!
     );
 
-    const { conversationId, message, userId } = await request.json();
-
+    // Validate input
     if (!conversationId || !message || !userId) {
       return NextResponse.json(
         { error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+
+    if (typeof message !== 'string' || message.trim().length === 0) {
+      return NextResponse.json(
+        { error: 'Message cannot be empty' },
+        { status: 400 }
+      );
+    }
+
+    if (message.length > 1600) {
+      return NextResponse.json(
+        { error: 'Message too long (max 1600 characters)' },
         { status: 400 }
       );
     }

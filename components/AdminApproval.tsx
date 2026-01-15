@@ -60,43 +60,52 @@ export default function AdminApproval({ onClose }: AdminApprovalProps) {
   const handleApprove = async (volunteerId: string) => {
     setProcessingId(volunteerId);
     try {
-      const { error } = await (supabase
-        .from('volunteers') as any)
-        .update({ approved: true })
-        .eq('id', volunteerId);
+      // CRITICAL: Use server-side API to prevent privilege escalation
+      const response = await fetch('/api/admin/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ volunteerId })
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to approve volunteer');
+      }
 
       // Remove from local state
       setPendingVolunteers(prev => prev.filter(v => v.id !== volunteerId));
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error approving volunteer:', error);
-      alert('Failed to approve volunteer. Please try again.');
+      alert(error.message || 'Failed to approve volunteer. Please try again.');
     } finally {
       setProcessingId(null);
     }
   };
 
   const handleReject = async (volunteerId: string) => {
-    if (!confirm('Are you sure you want to reject this volunteer? This will delete their account.')) {
+    if (!confirm('Are you sure you want to reject this volunteer? This will permanently delete their account.')) {
       return;
     }
 
     setProcessingId(volunteerId);
     try {
-      // Delete the volunteer record (will cascade to auth.users)
-      const { error } = await supabase
-        .from('volunteers')
-        .delete()
-        .eq('id', volunteerId);
+      // CRITICAL: Use server-side API to properly delete from auth.users
+      const response = await fetch('/api/admin/reject', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ volunteerId })
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to reject volunteer');
+      }
 
       // Remove from local state
       setPendingVolunteers(prev => prev.filter(v => v.id !== volunteerId));
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error rejecting volunteer:', error);
-      alert('Failed to reject volunteer. Please try again.');
+      alert(error.message || 'Failed to reject volunteer. Please try again.');
     } finally {
       setProcessingId(null);
     }

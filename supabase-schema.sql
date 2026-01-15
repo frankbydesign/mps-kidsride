@@ -37,7 +37,7 @@ create table messages (
   translated_text text,
   detected_language text,
   translation_error text,
-  status text default 'sent' check (status in ('pending', 'sent', 'failed')),
+  status text default 'sent' check (status in ('pending', 'sent', 'failed', 'received', 'superseded')),
   retry_count integer default 0,
   volunteer_id uuid references volunteers(id),
   volunteer_name text,
