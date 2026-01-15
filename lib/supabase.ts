@@ -1,4 +1,5 @@
 import { createBrowserClient } from '@supabase/ssr';
+import type { CookieOptions } from '@supabase/ssr';
 
 // Create client once at module load time
 // createBrowserClient from @supabase/ssr handles singleton pattern internally
@@ -6,7 +7,56 @@ import { createBrowserClient } from '@supabase/ssr';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
 
-export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
+// Configure browser client with explicit cookie handlers to ensure PKCE code verifier
+// is properly stored and retrieved for magic links
+export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey, {
+  cookies: {
+    getAll() {
+      // Parse all cookies from document.cookie
+      if (typeof document === 'undefined') return []; // SSR safety
+
+      return document.cookie.split(';').map((cookie) => {
+        const [name, ...valueParts] = cookie.trim().split('=');
+        const value = valueParts.join('=');
+        return {
+          name: name.trim(),
+          value: decodeURIComponent(value || ''),
+        };
+      }).filter(cookie => cookie.name); // Filter out empty names
+    },
+    setAll(cookiesToSet) {
+      // Set multiple cookies with proper options for PKCE flow
+      if (typeof document === 'undefined') return; // SSR safety
+
+      cookiesToSet.forEach(({ name, value, options }) => {
+        let cookie = `${name}=${encodeURIComponent(value)}`;
+
+        if (options?.maxAge) {
+          cookie += `; max-age=${options.maxAge}`;
+        }
+        if (options?.path) {
+          cookie += `; path=${options.path}`;
+        }
+        if (options?.domain) {
+          cookie += `; domain=${options.domain}`;
+        }
+        // Use SameSite=Lax to allow cookies on top-level navigations from email links
+        // This is critical for magic links and PKCE flow to work
+        if (options?.sameSite) {
+          cookie += `; SameSite=${options.sameSite}`;
+        } else {
+          cookie += '; SameSite=Lax';
+        }
+
+        if (options?.secure !== false) {
+          cookie += '; Secure';
+        }
+
+        document.cookie = cookie;
+      });
+    },
+  },
+});
 
 // Types for database tables
 export interface Volunteer {
