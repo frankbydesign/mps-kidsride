@@ -1,8 +1,9 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import AuthForm from '@/components/AuthForm';
-import PendingApproval from '@/components/PendingApproval';
+import PendingApprovalWrapper from '@/components/PendingApprovalWrapper';
 import Dashboard from '@/components/Dashboard';
+import SignOutButton from '@/components/SignOutButton';
 
 // Force dynamic rendering to prevent caching of auth state
 export const dynamic = 'force-dynamic';
@@ -64,17 +65,9 @@ export default async function Home() {
           <p className="text-sm text-gray-600 mb-6">
             {error.message || 'Please try signing in again'}
           </p>
-          <button
-            onClick={async () => {
-              'use server';
-              const supabase = await createClient();
-              await supabase.auth.signOut();
-              redirect('/');
-            }}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-          >
+          <SignOutButton className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
             Sign out and try again
-          </button>
+          </SignOutButton>
         </div>
       </div>
     );
@@ -91,17 +84,9 @@ export default async function Home() {
           <p className="text-sm text-gray-600 mb-6">
             This should only take a few seconds
           </p>
-          <button
-            onClick={async () => {
-              'use server';
-              const supabase = await createClient();
-              await supabase.auth.signOut();
-              redirect('/');
-            }}
-            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-          >
+          <SignOutButton className="text-sm text-blue-600 hover:text-blue-700 font-medium">
             Taking too long? Click here to sign out and try again
-          </button>
+          </SignOutButton>
         </div>
       </div>
     );
@@ -109,12 +94,7 @@ export default async function Home() {
 
   // Show pending approval screen if volunteer is not approved
   if (!volunteer.approved) {
-    return <PendingApproval userEmail={user.email || ''} onSignOut={async () => {
-      'use server';
-      const supabase = await createClient();
-      await supabase.auth.signOut();
-      redirect('/');
-    }} />;
+    return <PendingApprovalWrapper userEmail={user.email || ''} />;
   }
 
   // Show dashboard
