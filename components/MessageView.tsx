@@ -2,25 +2,11 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import type { Message, Conversation } from '@/lib/types';
 
-interface Message {
-  id: string;
-  direction: 'inbound' | 'outbound';
-  original_text: string;
-  translated_text: string | null;
-  detected_language: string;
-  status: string;
-  error_message: string | null;
-  created_at: string;
-  volunteer_id: string | null;
+// Extended type for message with joined volunteer data
+interface MessageWithVolunteer extends Message {
   volunteers?: { name: string };
-}
-
-interface Conversation {
-  id: string;
-  phone_number: string;
-  contact_name: string;
-  detected_language: string;
 }
 
 interface MessageViewProps {
@@ -35,7 +21,7 @@ export default function MessageView({
   onBack
 }: MessageViewProps) {
   const [conversation, setConversation] = useState<Conversation | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<MessageWithVolunteer[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [editingName, setEditingName] = useState(false);
@@ -87,7 +73,7 @@ export default function MessageView({
       console.error('Error fetching conversation:', error);
     } else if (data) {
       setConversation(data as any);
-      setEditedName((data as any).contact_name);
+      setEditedName((data as any).contact_name || '');
     }
   };
 
@@ -240,7 +226,7 @@ export default function MessageView({
                 <button
                   onClick={() => {
                     setEditingName(false);
-                    setEditedName(conversation.contact_name);
+                    setEditedName(conversation.contact_name || '');
                   }}
                   className="text-sm text-gray-600 hover:text-gray-900"
                 >

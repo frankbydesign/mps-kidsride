@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import type { Volunteer } from '@/app/page';
+import type { Volunteer } from '@/lib/types';
 
 interface AdminApprovalProps {
   onClose: () => void;

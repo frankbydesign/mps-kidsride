@@ -4,22 +4,10 @@ import AuthForm from '@/components/AuthForm';
 import PendingApprovalWrapper from '@/components/PendingApprovalWrapper';
 import Dashboard from '@/components/Dashboard';
 import SignOutButton from '@/components/SignOutButton';
+import type { Volunteer } from '@/lib/types';
 
 // Force dynamic rendering to prevent caching of auth state
 export const dynamic = 'force-dynamic';
-
-// Types for database tables
-export interface Volunteer {
-  id: string;
-  email: string;
-  name: string;
-  display_name?: string;
-  is_online?: boolean;
-  approved: boolean;
-  is_admin: boolean;
-  last_seen: string;
-  created_at: string;
-}
 
 export default async function Home() {
   const supabase = await createClient();
