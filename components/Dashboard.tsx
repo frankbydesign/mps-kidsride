@@ -5,7 +5,7 @@ import AdminApproval from '@/components/AdminApproval';
 import ConversationList from '@/components/ConversationList';
 import MessageView from '@/components/MessageView';
 import VolunteerList from '@/components/VolunteerList';
-import type { Volunteer } from '@/app/page';
+import type { Volunteer } from '@/lib/types';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 

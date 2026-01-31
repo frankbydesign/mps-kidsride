@@ -2,15 +2,10 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import type { Conversation } from '@/lib/types';
 
-interface Conversation {
-  id: string;
-  phone_number: string;
-  contact_name: string;
-  last_reply_at: string | null;
-  status: string;
-  detected_language: string;
-  last_reply_by: string | null;
+// Extended type for conversation with joined volunteer data
+interface ConversationWithVolunteer extends Conversation {
   volunteers?: { display_name: string };
 }
 
@@ -25,7 +20,7 @@ export default function ConversationList({
   selectedId,
   onSelect
 }: ConversationListProps) {
-  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [conversations, setConversations] = useState<ConversationWithVolunteer[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Create singleton Supabase client to prevent AbortError from React Strict Mode

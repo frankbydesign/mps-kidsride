@@ -2,13 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
-
-interface Volunteer {
-  id: string;
-  name: string;
-  email: string;
-  last_seen: string;
-}
+import type { Volunteer } from '@/lib/types';
 
 interface VolunteerListProps {
   currentUserId: string;
