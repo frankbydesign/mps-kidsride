@@ -30,29 +30,20 @@ export default function Dashboard({ volunteer, userId }: DashboardProps) {
 
   // Fetch and subscribe to pending volunteers count (admin only)
   useEffect(() => {
-    if (!volunteer?.is_admin) {
-      console.log('[Dashboard] User is not admin, skipping count fetch');
-      return;
-    }
-
-    console.log('[Dashboard] Setting up pending volunteers count subscription');
+    if (!volunteer?.is_admin) return;
 
     const fetchPendingCount = async () => {
-      console.log('[Dashboard] Fetching pending volunteers count...');
       const { data, error } = await supabase
         .from('volunteers')
         .select('*')
         .eq('approved', false);
 
-      console.log('[Dashboard] Query result - data:', data, 'error:', error);
-
       if (error) {
-        console.error('[Dashboard] Error fetching count:', error);
+        console.error('Error fetching pending volunteers count:', error);
         return;
       }
 
       const count = data?.length || 0;
-      console.log('[Dashboard] Setting pending count to:', count);
       setPendingVolunteersCount(count);
     };
 
@@ -70,7 +61,6 @@ export default function Dashboard({ volunteer, userId }: DashboardProps) {
           table: 'volunteers',
         },
         () => {
-          console.log('[Dashboard] Volunteers table changed, refetching count');
           // Refetch count when any volunteer record changes
           fetchPendingCount();
         }
@@ -79,7 +69,6 @@ export default function Dashboard({ volunteer, userId }: DashboardProps) {
 
     // Cleanup subscription on unmount
     return () => {
-      console.log('[Dashboard] Cleaning up subscription');
       supabase.removeChannel(channel);
     };
   }, [volunteer?.is_admin, supabase]);
@@ -88,8 +77,6 @@ export default function Dashboard({ volunteer, userId }: DashboardProps) {
   if (showAdminApproval && volunteer?.is_admin) {
     return <AdminApproval onClose={() => setShowAdminApproval(false)} />;
   }
-
-  console.log('[Dashboard] Rendering - pendingVolunteersCount:', pendingVolunteersCount);
 
   return (
     <div className="flex h-screen bg-gray-50">
