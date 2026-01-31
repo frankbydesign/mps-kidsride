@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import AdminApproval from '@/components/AdminApproval';
 import ConversationList from '@/components/ConversationList';
 import MessageView from '@/components/MessageView';
@@ -17,7 +17,9 @@ interface DashboardProps {
 export default function Dashboard({ volunteer, userId }: DashboardProps) {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [showAdminApproval, setShowAdminApproval] = useState(false);
+  const [pendingVolunteersCount, setPendingVolunteersCount] = useState(0);
   const router = useRouter();
+  const supabase = useMemo(() => createClient(), []);
 
   const handleSignOut = async () => {
     const supabase = createClient();
@@ -25,6 +27,47 @@ export default function Dashboard({ volunteer, userId }: DashboardProps) {
     router.push('/');
     router.refresh();
   };
+
+  // Fetch and subscribe to pending volunteers count (admin only)
+  useEffect(() => {
+    if (!volunteer?.is_admin) return;
+
+    const fetchPendingCount = async () => {
+      const { count, error } = await supabase
+        .from('volunteers')
+        .select('*', { count: 'exact', head: true })
+        .eq('approved', false);
+
+      if (!error && count !== null) {
+        setPendingVolunteersCount(count);
+      }
+    };
+
+    // Fetch initial count
+    fetchPendingCount();
+
+    // Subscribe to real-time changes
+    const channel = supabase
+      .channel('volunteers-pending-count')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'volunteers',
+        },
+        () => {
+          // Refetch count when any volunteer record changes
+          fetchPendingCount();
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription on unmount
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [volunteer?.is_admin, supabase]);
 
   // Show admin approval interface if requested
   if (showAdminApproval && volunteer?.is_admin) {
@@ -51,9 +94,13 @@ export default function Dashboard({ volunteer, userId }: DashboardProps) {
           {volunteer?.is_admin && (
             <button
               onClick={() => setShowAdminApproval(true)}
-              className="w-full mb-4 bg-purple-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-colors text-sm"
+              className={`w-full mb-4 text-white py-2 px-4 rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors text-sm ${
+                pendingVolunteersCount > 0
+                  ? 'bg-red-500 hover:bg-red-600 focus:ring-red-500'
+                  : 'bg-purple-600 hover:bg-purple-700 focus:ring-purple-500'
+              }`}
             >
-              Approve Volunteers
+              Approve Volunteers{pendingVolunteersCount > 0 ? ` (${pendingVolunteersCount} pending)` : ''}
             </button>
           )}
         </div>
