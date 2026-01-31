@@ -200,7 +200,7 @@ export default function MessageView({
         <div className="flex items-center gap-3">
           <button
             onClick={onBack}
-            className="md:hidden text-gray-600 hover:text-gray-900"
+            className="md:hidden text-gray-600 hover:text-gray-900 transition-colors"
           >
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -219,7 +219,7 @@ export default function MessageView({
                 />
                 <button
                   onClick={handleNameSave}
-                  className="text-sm text-blue-600 hover:text-blue-700"
+                  className="text-sm text-blue-600 hover:text-blue-700 transition-colors"
                 >
                   Save
                 </button>
@@ -228,7 +228,7 @@ export default function MessageView({
                     setEditingName(false);
                     setEditedName(conversation.contact_name || '');
                   }}
-                  className="text-sm text-gray-600 hover:text-gray-900"
+                  className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
                 >
                   Cancel
                 </button>
@@ -241,7 +241,7 @@ export default function MessageView({
                   </h2>
                   <button
                     onClick={() => setEditingName(true)}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -297,7 +297,7 @@ export default function MessageView({
                     {message.status === 'failed' && (
                       <button
                         onClick={() => handleRetry(message.id)}
-                        className="ml-2 text-red-200 hover:text-white underline"
+                        className="ml-2 text-red-200 hover:text-white underline transition-colors"
                       >
                         Retry
                       </button>
@@ -332,7 +332,7 @@ export default function MessageView({
           <button
             type="submit"
             disabled={sending || !newMessage.trim()}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {sending ? 'Sending...' : 'Send'}
           </button>
