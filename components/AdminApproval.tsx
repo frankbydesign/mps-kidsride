@@ -74,9 +74,10 @@ export default function AdminApproval({ onClose }: AdminApprovalProps) {
 
       // Remove from local state
       setPendingVolunteers(prev => prev.filter(v => v.id !== volunteerId));
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error approving volunteer:', error);
-      alert(error.message || 'Failed to approve volunteer. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to approve volunteer. Please try again.';
+      alert(errorMessage);
     } finally {
       setProcessingId(null);
     }
@@ -103,9 +104,10 @@ export default function AdminApproval({ onClose }: AdminApprovalProps) {
 
       // Remove from local state
       setPendingVolunteers(prev => prev.filter(v => v.id !== volunteerId));
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error rejecting volunteer:', error);
-      alert(error.message || 'Failed to reject volunteer. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to reject volunteer. Please try again.';
+      alert(errorMessage);
     } finally {
       setProcessingId(null);
     }

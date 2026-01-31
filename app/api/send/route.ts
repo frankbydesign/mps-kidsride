@@ -3,6 +3,7 @@ import twilio from 'twilio';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { translateMessage } from '@/lib/translate';
+import type { Conversation } from '@/lib/types';
 
 export async function POST(request: NextRequest) {
   try {
@@ -90,14 +91,15 @@ export async function POST(request: NextRequest) {
 
     // Translate message if needed
     let textToSend = message;
-    const targetLanguage = (conversation as any).detected_language || 'en';
+    const conversationData = conversation as Conversation;
+    const targetLanguage = conversationData.detected_language || 'en';
 
     if (targetLanguage !== 'en') {
       textToSend = await translateMessage(message, 'en', targetLanguage);
     }
 
     // Send SMS with retry logic
-    let lastError = null;
+    let lastError: Error | null = null;
     let twilioMessage = null;
 
     for (let attempt = 1; attempt <= 3; attempt++) {
@@ -105,11 +107,11 @@ export async function POST(request: NextRequest) {
         twilioMessage = await twilioClient.messages.create({
           body: textToSend,
           from: process.env.TWILIO_PHONE_NUMBER!,
-          to: (conversation as any).phone_number
+          to: conversationData.phone_number
         });
         break; // Success
-      } catch (error: any) {
-        lastError = error;
+      } catch (error: unknown) {
+        lastError = error instanceof Error ? error : new Error('Unknown error');
         console.error(`Send attempt ${attempt} failed:`, error);
 
         if (attempt < 3) {
@@ -121,8 +123,8 @@ export async function POST(request: NextRequest) {
 
     // Save message to database
     const messageStatus = twilioMessage ? 'sent' : 'failed';
-    const { data: savedMessage, error: messageError } = await (supabaseAdmin
-      .from('messages') as any)
+    const { data: savedMessage, error: messageError } = await supabaseAdmin
+      .from('messages')
       .insert({
         conversation_id: conversationId,
         volunteer_id: userId,
@@ -133,7 +135,7 @@ export async function POST(request: NextRequest) {
         twilio_sid: twilioMessage?.sid || null,
         status: messageStatus,
         error_message: lastError?.message || null
-      })
+      } as never)
       .select()
       .single();
 
@@ -146,12 +148,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Update conversation
-    await (supabaseAdmin
-      .from('conversations') as any)
+    await supabaseAdmin
+      .from('conversations')
       .update({
         last_reply_at: new Date().toISOString(),
         last_reply_by: userId
-      })
+      } as never)
       .eq('id', conversationId);
 
     if (!twilioMessage) {
@@ -169,10 +171,11 @@ export async function POST(request: NextRequest) {
       message: savedMessage,
       twilioSid: twilioMessage.sid
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Send error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: errorMessage },
       { status: 500 }
     );
   }

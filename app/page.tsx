@@ -1,4 +1,3 @@
-import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import AuthForm from '@/components/AuthForm';
 import PendingApprovalWrapper from '@/components/PendingApprovalWrapper';

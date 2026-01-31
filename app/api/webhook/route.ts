@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import twilio from 'twilio';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { translateMessage, detectLanguage } from '@/lib/translate';
+import type { Conversation } from '@/lib/types';
 
 export async function POST(request: NextRequest) {
   try {
@@ -61,52 +62,56 @@ export async function POST(request: NextRequest) {
       if (detectedLanguage !== 'en') {
         translatedText = await translateMessage(body_text, detectedLanguage, 'en');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Translation error:', error);
-      translationError = error.message || 'Translation failed';
+      translationError = error instanceof Error ? error.message : 'Translation failed';
       // Continue processing - save message without translation
     }
 
     // Find or create conversation
-    let { data: conversation } = await supabaseAdmin
+    const { data: existingConversation } = await supabaseAdmin
       .from('conversations')
       .select('*')
       .eq('phone_number', from)
       .single();
 
-    if (!conversation) {
-      const { data: newConversation, error: convError } = await (supabaseAdmin
-        .from('conversations') as any)
+    let conversation: Conversation;
+
+    if (!existingConversation) {
+      const { data: newConversation, error: convError } = await supabaseAdmin
+        .from('conversations')
         .insert({
           phone_number: from,
           contact_name: from,
           detected_language: detectedLanguage,
           status: 'new'
-        })
+        } as never)
         .select()
         .single();
 
-      if (convError) {
+      if (convError || !newConversation) {
         console.error('Error creating conversation:', convError);
         return NextResponse.json({ error: 'Database error' }, { status: 500 });
       }
 
-      conversation = newConversation;
+      conversation = newConversation as Conversation;
     } else {
+      conversation = existingConversation as Conversation;
       // Update detected language if needed
-      if ((conversation as any).detected_language !== detectedLanguage) {
-        await (supabaseAdmin
-          .from('conversations') as any)
-          .update({ detected_language: detectedLanguage })
-          .eq('id', (conversation as any).id);
+      if (conversation.detected_language !== detectedLanguage) {
+        await supabaseAdmin
+          .from('conversations')
+          .update({ detected_language: detectedLanguage } as never)
+          .eq('id', conversation.id);
       }
     }
 
     // Save message
-    const { error: messageError } = await (supabaseAdmin
-      .from('messages') as any)
+    const conversationData = conversation;
+    const { error: messageError } = await supabaseAdmin
+      .from('messages')
       .insert({
-        conversation_id: (conversation as any).id,
+        conversation_id: conversationData.id,
         direction: 'inbound',
         original_text: body_text,
         translated_text: detectedLanguage !== 'en' ? translatedText : null,
@@ -114,7 +119,7 @@ export async function POST(request: NextRequest) {
         twilio_sid: messageSid,
         status: 'received',
         translation_error: translationError
-      });
+      } as never);
 
     if (messageError) {
       console.error('Error saving message:', messageError);
@@ -122,10 +127,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Update conversation's last message time
-    await (supabaseAdmin
-      .from('conversations') as any)
-      .update({ last_reply_at: new Date().toISOString() })
-      .eq('id', (conversation as any).id);
+    await supabaseAdmin
+      .from('conversations')
+      .update({ last_reply_at: new Date().toISOString() } as never)
+      .eq('id', conversationData.id);
 
     // Return TwiML response
     return new NextResponse(

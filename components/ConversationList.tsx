@@ -10,13 +10,11 @@ interface ConversationWithVolunteer extends Conversation {
 }
 
 interface ConversationListProps {
-  userId: string;
   selectedId: string | null;
   onSelect: (id: string) => void;
 }
 
 export default function ConversationList({
-  userId,
   selectedId,
   onSelect
 }: ConversationListProps) {
@@ -66,9 +64,9 @@ export default function ConversationList({
   };
 
   const handleResolve = async (id: string) => {
-    const { error } = await (supabase
-      .from('conversations') as any)
-      .update({ status: 'resolved' })
+    const { error } = await supabase
+      .from('conversations')
+      .update({ status: 'resolved' } as never)
       .eq('id', id);
 
     if (error) {

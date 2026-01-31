@@ -63,15 +63,16 @@ export default function AuthForm() {
         // Successful sign in - redirect to home
         window.location.href = '/';
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Auth error:', err);
       // Provide more specific error messages
-      if (err.message?.includes('Invalid login credentials')) {
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred during authentication';
+      if (errorMessage.includes('Invalid login credentials')) {
         setError('Invalid email or password. Please try again.');
-      } else if (err.message?.includes('Email not confirmed')) {
+      } else if (errorMessage.includes('Email not confirmed')) {
         setError('Please confirm your email address before signing in.');
       } else {
-        setError(err.message || 'An error occurred during authentication');
+        setError(errorMessage);
       }
     } finally {
       setLoading(false);
