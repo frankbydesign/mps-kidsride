@@ -10,6 +10,8 @@ export interface Volunteer {
   id: string;
   email: string;
   display_name: string | null;
+  phone: string | null;
+  description: string | null;
   is_online: boolean | null;
   approved: boolean;
   is_admin: boolean;
