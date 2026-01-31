@@ -39,22 +39,21 @@ export default function Dashboard({ volunteer, userId }: DashboardProps) {
 
     const fetchPendingCount = async () => {
       console.log('[Dashboard] Fetching pending volunteers count...');
-      const { count, error } = await supabase
+      const { data, error } = await supabase
         .from('volunteers')
-        .select('*', { count: 'exact', head: true })
+        .select('*')
         .eq('approved', false);
 
-      console.log('[Dashboard] Query result - count:', count, 'error:', error);
+      console.log('[Dashboard] Query result - data:', data, 'error:', error);
 
       if (error) {
         console.error('[Dashboard] Error fetching count:', error);
         return;
       }
 
-      if (count !== null) {
-        console.log('[Dashboard] Setting pending count to:', count);
-        setPendingVolunteersCount(count);
-      }
+      const count = data?.length || 0;
+      console.log('[Dashboard] Setting pending count to:', count);
+      setPendingVolunteersCount(count);
     };
 
     // Fetch initial count
