@@ -15,6 +15,10 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ volunteer, userId }: DashboardProps) {
+  console.log('[Dashboard] Received volunteer prop:', JSON.stringify(volunteer, null, 2));
+  console.log('[Dashboard] volunteer.is_admin:', volunteer?.is_admin);
+  console.log('[Dashboard] typeof volunteer.is_admin:', typeof volunteer?.is_admin);
+
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [showAdminApproval, setShowAdminApproval] = useState(false);
   const [pendingVolunteersCount, setPendingVolunteersCount] = useState(0);
@@ -30,13 +34,17 @@ export default function Dashboard({ volunteer, userId }: DashboardProps) {
 
   // Fetch and subscribe to pending volunteers count (admin only)
   useEffect(() => {
+    console.log('[PendingCount useEffect] Running, volunteer.is_admin:', volunteer?.is_admin);
     if (!volunteer?.is_admin) return;
+    console.log('[PendingCount useEffect] Passed admin check, fetching count...');
 
     const fetchPendingCount = async () => {
       const { data, error } = await supabase
         .from('volunteers')
         .select('*')
         .eq('approved', false);
+
+      console.log('[PendingCount] Query result - data:', data, 'error:', error);
 
       if (error) {
         console.error('Error fetching pending volunteers count:', error);
