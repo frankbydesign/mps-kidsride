@@ -237,7 +237,7 @@ This test plan covers the new volunteer approval system for MPS Kids Ride, which
 #### Test Case 8.1: Run Migration on Existing Database
 **Steps:**
 1. Start with existing database
-2. Run migration-add-volunteer-approval.sql
+2. Run database/002_volunteer_approval.sql
 3. Check schema
 
 **Expected Results:**

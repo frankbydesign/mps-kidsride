@@ -121,8 +121,8 @@ This document details all fixes applied to resolve CRITICAL and HIGH severity is
 ### ✅ 6. Fixed Message Retry to Preserve Original Messages
 **Files:**
 - UPDATED: `components/MessageView.tsx`
-- UPDATED: `supabase-schema.sql`
-- NEW: `migration-add-superseded-status.sql`
+- UPDATED: `database/001_initial_schema.sql`
+- NEW: `database/004_superseded_status.sql`
 
 **Issue:** When retrying a failed message, the original was deleted. If retry also failed, message was lost forever.
 
@@ -201,7 +201,7 @@ These require infrastructure changes or extensive refactoring:
 
 ### ⏳ 11. Admin Email Hardcoded in Database Trigger
 **Status:** Not Implemented
-**File:** `supabase-schema.sql:182`
+**File:** `database/001_initial_schema.sql:182`
 **Current:** `frank@centerpointcorp.com` is hardcoded
 **Recommendation:**
 - Use environment variable in database
@@ -237,7 +237,7 @@ These require infrastructure changes or extensive refactoring:
 3. `components/ErrorBoundary.tsx` - React error boundary component
 4. `app/api/admin/approve/route.ts` - Secure volunteer approval endpoint
 5. `app/api/admin/reject/route.ts` - Secure volunteer rejection endpoint
-6. `migration-add-superseded-status.sql` - Database migration for superseded status
+6. `database/004_superseded_status.sql` - Database migration for superseded status
 
 ---
 
@@ -249,7 +249,7 @@ These require infrastructure changes or extensive refactoring:
 4. `components/MessageView.tsx` - Fixed retry to mark as superseded
 5. `app/page.tsx` - Improved error handling and loading states
 6. `app/layout.tsx` - Added ErrorBoundary wrapper
-7. `supabase-schema.sql` - Updated message status constraint
+7. `database/001_initial_schema.sql` - Updated message status constraint
 
 ---
 
@@ -285,12 +285,13 @@ Before deploying to production, ensure:
 - [ ] `ANTHROPIC_API_KEY`
 
 ### Database Setup
-- [ ] Run `supabase-schema.sql` to create tables
-- [ ] Run `migration-add-volunteer-approval.sql`
-- [ ] Run `migration-fix-approval-bugs.sql`
-- [ ] Run `migration-add-superseded-status.sql` (NEW)
+- [ ] Run `database/001_initial_schema.sql` to create tables
+- [ ] Run `database/002_volunteer_approval.sql`
+- [ ] Run `database/003_fix_approval_bugs.sql`
+- [ ] Run `database/004_superseded_status.sql` (NEW)
 - [ ] Verify RLS policies are enabled
 - [ ] Verify indexes are created
+- [ ] See `database/README.md` for complete migration instructions
 
 ### External Services
 - [ ] Configure Twilio webhook URL: `https://your-domain.vercel.app/api/webhook`
@@ -419,6 +420,7 @@ The codebase continues to have these strengths:
 
 For questions or issues, refer to:
 - Full audit: `AUDIT_REPORT.md`
-- Database schema: `supabase-schema.sql`
+- Database schema: `database/001_initial_schema.sql`
+- Database migrations: `database/README.md`
 - Setup guide: `SETUP.md`
 - Test plan: `TEST_PLAN.md`

@@ -6,7 +6,7 @@ This document summarizes the volunteer approval system implementation for MPS Ki
 ## Features Implemented
 
 ### 1. Database Schema Changes
-**File:** `supabase-schema.sql`
+**File:** `database/001_initial_schema.sql`
 
 - Added `approved` boolean column (default: false)
 - Added `is_admin` boolean column (default: false)
@@ -74,7 +74,7 @@ is_online?: boolean;
 - Updates volunteer state on auth changes
 
 ### 5. Migration Script
-**File:** `migration-add-volunteer-approval.sql`
+**File:** `database/002_volunteer_approval.sql`
 
 Complete SQL migration for existing databases including:
 - Column additions with defaults
@@ -144,25 +144,25 @@ Comprehensive test plan covering:
 
 ## Files Modified
 
-1. `supabase-schema.sql` - Database schema and RLS policies
+1. `database/001_initial_schema.sql` - Database schema and RLS policies
 2. `lib/supabase.ts` - TypeScript type definitions
 3. `components/AuthForm.tsx` - Simplified signup flow
 4. `app/page.tsx` - Main application routing logic
 5. `components/PendingApproval.tsx` - NEW: Pending approval screen
 6. `components/AdminApproval.tsx` - NEW: Admin approval interface
-7. `migration-add-volunteer-approval.sql` - NEW: Migration script
+7. `database/002_volunteer_approval.sql` - NEW: Migration script
 8. `TEST_PLAN.md` - NEW: Comprehensive test plan
 
 ## Deployment Instructions
 
 ### For New Databases
-1. Use the updated `supabase-schema.sql` file
-2. Run the SQL in Supabase SQL Editor
+1. Use the updated `database/001_initial_schema.sql` file
+2. Run all migrations in order (see `database/README.md`)
 3. Deploy the application code
 4. Ensure frank@centerpointcorp.com signs up first (or will auto-admin later)
 
 ### For Existing Databases
-1. Run `migration-add-volunteer-approval.sql` in Supabase SQL Editor
+1. Run `database/002_volunteer_approval.sql` in Supabase SQL Editor
 2. Optionally uncomment the auto-approve line to approve existing volunteers
 3. Manually set frank@centerpointcorp.com as admin if already registered:
    ```sql
@@ -243,7 +243,7 @@ SELECT id, email, display_name, is_admin, approved FROM volunteers WHERE is_admi
 
 For questions or issues with this implementation, contact the development team or refer to:
 - `TEST_PLAN.md` for detailed testing procedures
-- `migration-add-volunteer-approval.sql` for database setup
+- `database/002_volunteer_approval.sql` for database setup
 - GitHub issues for bug reports
 
 ---

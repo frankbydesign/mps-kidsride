@@ -193,7 +193,7 @@ try {
 ---
 
 ### 5. Admin Email Hardcoded in Database Trigger
-**File:** `supabase-schema.sql:182`
+**File:** `database/001_initial_schema.sql:182`
 **Severity:** HIGH
 **Category:** Security / Code Quality
 

@@ -1,4 +1,4 @@
-// Database types matching supabase-schema.sql
+// Database types matching database/001_initial_schema.sql
 
 // Enum types using TypeScript string literal unions
 export type ConversationStatus = 'new' | 'active' | 'resolved';
