@@ -33,14 +33,18 @@ export default function Dashboard({ volunteer, userId }: DashboardProps) {
     if (!volunteer?.is_admin) return;
 
     const fetchPendingCount = async () => {
-      const { count, error } = await supabase
+      const { data, error } = await supabase
         .from('volunteers')
-        .select('*', { count: 'exact', head: true })
+        .select('*')
         .eq('approved', false);
 
-      if (!error && count !== null) {
-        setPendingVolunteersCount(count);
+      if (error) {
+        console.error('Error fetching pending volunteers count:', error);
+        return;
       }
+
+      const count = data?.length || 0;
+      setPendingVolunteersCount(count);
     };
 
     // Fetch initial count
