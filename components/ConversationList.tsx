@@ -122,7 +122,7 @@ export default function ConversationList({
       {conversations.map((conversation) => (
         <div
           key={conversation.id}
-          className={`p-4 border-b border-gray-200 cursor-pointer hover:bg-gray-50 ${
+          className={`p-4 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors ${
             selectedId === conversation.id ? 'bg-blue-50' : ''
           }`}
           onClick={() => onSelect(conversation.id)}
@@ -159,7 +159,7 @@ export default function ConversationList({
                   e.stopPropagation();
                   handleResolve(conversation.id);
                 }}
-                className="text-xs text-green-600 hover:text-green-800"
+                className="text-xs text-green-600 hover:text-green-800 transition-colors"
               >
                 Resolve
               </button>

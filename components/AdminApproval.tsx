@@ -123,7 +123,7 @@ export default function AdminApproval({ onClose }: AdminApprovalProps) {
         </div>
         <button
           onClick={onClose}
-          className="text-gray-600 hover:text-gray-900 font-medium"
+          className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
         >
           Close
         </button>

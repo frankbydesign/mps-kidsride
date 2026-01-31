@@ -41,7 +41,7 @@ export default function Dashboard({ volunteer, userId }: DashboardProps) {
             <h1 className="text-xl font-bold text-gray-900">Ride Hotline</h1>
             <button
               onClick={handleSignOut}
-              className="text-sm text-gray-600 hover:text-gray-900"
+              className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
             >
               Sign Out
             </button>
