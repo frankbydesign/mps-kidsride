@@ -46,7 +46,7 @@ export default function VolunteerList({ currentUserId }: VolunteerListProps) {
     const { data, error } = await supabase
       .from('volunteers')
       .select('*')
-      .order('name', { ascending: true });
+      .order('display_name', { ascending: true });
 
     if (error) {
       console.error('Error fetching volunteers:', error);
@@ -83,7 +83,7 @@ export default function VolunteerList({ currentUserId }: VolunteerListProps) {
                 }`}
               />
               <span className="text-sm text-gray-700">
-                {volunteer.name}
+                {volunteer.display_name || volunteer.email}
                 {isCurrentUser && (
                   <span className="text-gray-500 ml-1">(you)</span>
                 )}

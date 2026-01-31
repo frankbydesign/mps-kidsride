@@ -9,9 +9,8 @@ export type MessageDirection = 'inbound' | 'outbound';
 export interface Volunteer {
   id: string;
   email: string;
-  name: string;
-  display_name?: string;
-  is_online?: boolean;
+  display_name: string | null;
+  is_online: boolean | null;
   approved: boolean;
   is_admin: boolean;
   last_seen: string;
