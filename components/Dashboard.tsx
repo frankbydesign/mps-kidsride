@@ -111,7 +111,6 @@ export default function Dashboard({ volunteer, userId }: DashboardProps) {
 
         {/* Conversation list */}
         <ConversationList
-          userId={userId}
           selectedId={selectedConversationId}
           onSelect={setSelectedConversationId}
         />

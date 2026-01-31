@@ -46,9 +46,9 @@ export async function POST(request: NextRequest) {
 
     // Use admin client to bypass RLS and approve volunteer
     const supabaseAdmin = createAdminClient();
-    const { error: updateError } = await (supabaseAdmin
-      .from('volunteers') as any)
-      .update({ approved: true })
+    const { error: updateError } = await supabaseAdmin
+      .from('volunteers')
+      .update({ approved: true } as never)
       .eq('id', volunteerId);
 
     if (updateError) {
@@ -60,10 +60,11 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Approval error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: errorMessage },
       { status: 500 }
     );
   }

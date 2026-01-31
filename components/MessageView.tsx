@@ -72,8 +72,9 @@ export default function MessageView({
     if (error) {
       console.error('Error fetching conversation:', error);
     } else if (data) {
-      setConversation(data as any);
-      setEditedName((data as any).contact_name || '');
+      const conversationData = data as Conversation;
+      setConversation(conversationData);
+      setEditedName(conversationData.contact_name || '');
     }
   };
 
@@ -119,9 +120,10 @@ export default function MessageView({
       }
 
       setNewMessage('');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Send error:', error);
-      alert(`Failed to send: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Failed to send: ${errorMessage}`);
     } finally {
       setSending(false);
     }
@@ -149,9 +151,9 @@ export default function MessageView({
       }
 
       // Mark the failed message as superseded instead of deleting
-      await (supabase
-        .from('messages') as any)
-        .update({ status: 'superseded' })
+      await supabase
+        .from('messages')
+        .update({ status: 'superseded' } as never)
         .eq('id', messageId);
 
       fetchMessages();
@@ -164,9 +166,9 @@ export default function MessageView({
   const handleNameSave = async () => {
     if (!conversation || !editedName.trim()) return;
 
-    const { error } = await (supabase
-      .from('conversations') as any)
-      .update({ contact_name: editedName.trim() })
+    const { error } = await supabase
+      .from('conversations')
+      .update({ contact_name: editedName.trim() } as never)
       .eq('id', conversationId);
 
     if (error) {
