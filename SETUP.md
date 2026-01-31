@@ -46,9 +46,10 @@ You'll need accounts at these services:
 1. Go to supabase.com and create a new project
 2. Wait for it to initialize (~2 minutes)
 3. Go to **SQL Editor** (left sidebar)
-4. Copy the entire contents of `supabase-schema.sql` from this repo
+4. Copy the entire contents of `database/001_initial_schema.sql` from this repo
 5. Paste it into the SQL Editor and click **Run**
 6. ✅ You should see "Success. No rows returned"
+7. Run the remaining migrations in order (see `database/README.md` for details)
 
 **Get your API keys:**
 

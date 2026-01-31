@@ -65,7 +65,12 @@ Parents text **one phone number** to request rides. Volunteers access a shared w
 │   └── translate.ts          # Claude translation service
 ├── public/
 │   └── manifest.json         # PWA manifest
-├── supabase-schema.sql       # Database schema
+├── database/                 # Database migrations (run in order)
+│   ├── README.md             # Migration instructions
+│   ├── 001_initial_schema.sql
+│   ├── 002_volunteer_approval.sql
+│   ├── 003_fix_approval_bugs.sql
+│   └── 004_superseded_status.sql
 ├── SETUP.md                  # Complete setup guide
 └── package.json              # Dependencies
 ```
@@ -147,7 +152,7 @@ Key tables:
 - **conversations** - One per phone number
 - **messages** - SMS messages (inbound/outbound)
 
-See `supabase-schema.sql` for complete schema with RLS policies.
+See `database/001_initial_schema.sql` for complete schema with RLS policies.
 
 ## Deployment
 
