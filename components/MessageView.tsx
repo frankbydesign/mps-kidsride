@@ -6,7 +6,7 @@ import type { Message, Conversation } from '@/lib/types';
 
 // Extended type for message with joined volunteer data
 interface MessageWithVolunteer extends Message {
-  volunteers?: { name: string };
+  volunteers?: { display_name: string | null };
 }
 
 interface MessageViewProps {
@@ -81,7 +81,7 @@ export default function MessageView({
   const fetchMessages = async () => {
     const { data, error } = await supabase
       .from('messages')
-      .select('*, volunteers:volunteer_id(name)')
+      .select('*, volunteers:volunteer_id(display_name)')
       .eq('conversation_id', conversationId)
       .neq('status', 'superseded')  // Filter out superseded messages
       .order('created_at', { ascending: true });
@@ -311,7 +311,7 @@ export default function MessageView({
 
               {message.volunteers && message.direction === 'outbound' && (
                 <p className={`text-xs mt-1 ${message.direction === 'outbound' ? 'text-blue-200' : 'text-gray-400'}`}>
-                  {message.volunteers.name}
+                  {message.volunteers.display_name}
                 </p>
               )}
             </div>

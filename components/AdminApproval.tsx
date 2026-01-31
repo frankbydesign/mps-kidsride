@@ -169,7 +169,7 @@ export default function AdminApproval({ onClose }: AdminApprovalProps) {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-gray-900">
-                      {volunteer.display_name || volunteer.name || 'No name provided'}
+                      {volunteer.display_name || volunteer.email}
                     </h3>
                     <p className="text-sm text-gray-600 mt-1">
                       {volunteer.email}
