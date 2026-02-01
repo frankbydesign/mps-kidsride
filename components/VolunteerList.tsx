@@ -66,7 +66,7 @@ export default function VolunteerList({ currentUserId, onVolunteerClick }: Volun
   return (
     <div>
       <h3 className="text-sm font-semibold text-gray-700 mb-3">
-        Volunteers Online
+        Volunteers
       </h3>
       <div className="space-y-2">
         {volunteers.map((volunteer) => {
