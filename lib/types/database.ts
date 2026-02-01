@@ -15,7 +15,7 @@ export interface Volunteer {
   is_online: boolean | null;
   approved: boolean;
   is_admin: boolean;
-  last_seen: string;
+  last_seen: string | null;
   created_at: string;
 }
 

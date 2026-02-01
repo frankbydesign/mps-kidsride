@@ -35,6 +35,30 @@ export default function Dashboard({ volunteer, userId }: DashboardProps) {
     setCurrentVolunteer(volunteer);
   }, [volunteer]);
 
+  // Heartbeat: Update last_seen every 60 seconds
+  useEffect(() => {
+    const updatePresence = async () => {
+      const { error } = await supabase
+        .from('volunteers')
+        .update({ last_seen: new Date().toISOString() })
+        .eq('id', userId);
+
+      if (error) {
+        console.error('Error updating presence:', error);
+      }
+    };
+
+    // Update immediately on mount
+    updatePresence();
+
+    // Then update every 60 seconds
+    const interval = setInterval(updatePresence, 60000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [userId, supabase]);
+
   const handleSignOut = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
