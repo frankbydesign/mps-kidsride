@@ -6,9 +6,10 @@ import type { Volunteer } from '@/lib/types';
 
 interface VolunteerListProps {
   currentUserId: string;
+  onVolunteerClick?: (volunteer: Volunteer) => void;
 }
 
-export default function VolunteerList({ currentUserId }: VolunteerListProps) {
+export default function VolunteerList({ currentUserId, onVolunteerClick }: VolunteerListProps) {
   const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
 
   // Create singleton Supabase client to prevent AbortError from React Strict Mode
@@ -73,9 +74,11 @@ export default function VolunteerList({ currentUserId }: VolunteerListProps) {
           const isCurrentUser = volunteer.id === currentUserId;
 
           return (
-            <div
+            <button
               key={volunteer.id}
-              className="flex items-center gap-2"
+              onClick={() => onVolunteerClick?.(volunteer)}
+              className="flex items-center gap-2 w-full text-left hover:bg-gray-50 rounded px-2 py-1.5 -mx-2 transition-colors cursor-pointer"
+              disabled={!onVolunteerClick}
             >
               <div
                 className={`w-2 h-2 rounded-full ${
@@ -88,7 +91,7 @@ export default function VolunteerList({ currentUserId }: VolunteerListProps) {
                   <span className="text-gray-500 ml-1">(you)</span>
                 )}
               </span>
-            </div>
+            </button>
           );
         })}
       </div>
