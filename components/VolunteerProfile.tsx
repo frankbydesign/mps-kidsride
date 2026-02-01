@@ -12,11 +12,12 @@ export default function VolunteerProfile({ volunteer, isOpen, onClose }: Volunte
   if (!isOpen || !volunteer) return null;
 
   // Check if volunteer is online (same logic as VolunteerList)
-  const isOnline = (lastSeen: string) => {
+  const isOnline = (lastSeen: string | null) => {
+    if (!lastSeen) return false;
     const lastSeenDate = new Date(lastSeen);
     const now = new Date();
     const diffMinutes = (now.getTime() - lastSeenDate.getTime()) / 60000;
-    return diffMinutes < 2; // Online if seen in last 2 minutes
+    return diffMinutes < 3; // Online if seen in last 3 minutes
   };
 
   const online = isOnline(volunteer.last_seen);
