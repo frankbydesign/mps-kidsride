@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { Conversation } from '@/lib/types';
 
@@ -24,6 +24,21 @@ export default function ConversationList({
   // Create singleton Supabase client to prevent AbortError from React Strict Mode
   const supabase = useMemo(() => createClient(), []);
 
+  const fetchConversations = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('conversations')
+      .select('*, volunteers:last_reply_by(display_name)')
+      .neq('status', 'resolved')
+      .order('last_reply_at', { ascending: false, nullsFirst: false });
+
+    if (error) {
+      console.error('Error fetching conversations:', error);
+    } else {
+      setConversations(data || []);
+    }
+    setLoading(false);
+  }, [supabase]);
+
   useEffect(() => {
     fetchConversations();
 
@@ -46,22 +61,7 @@ export default function ConversationList({
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
-
-  const fetchConversations = async () => {
-    const { data, error } = await supabase
-      .from('conversations')
-      .select('*, volunteers:last_reply_by(display_name)')
-      .neq('status', 'resolved')
-      .order('last_reply_at', { ascending: false, nullsFirst: false });
-
-    if (error) {
-      console.error('Error fetching conversations:', error);
-    } else {
-      setConversations(data || []);
-    }
-    setLoading(false);
-  };
+  }, [fetchConversations, supabase]);
 
   const handleResolve = async (id: string) => {
     const { error } = await supabase

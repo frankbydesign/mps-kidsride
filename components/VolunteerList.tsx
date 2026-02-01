@@ -16,6 +16,19 @@ export default function VolunteerList({ currentUserId, onVolunteerClick }: Volun
   const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
+    const fetchVolunteers = async () => {
+      const { data, error } = await supabase
+        .from('volunteers')
+        .select('*')
+        .order('display_name', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching volunteers:', error);
+      } else {
+        setVolunteers(data || []);
+      }
+    };
+
     fetchVolunteers();
 
     // Subscribe to volunteer updates
@@ -41,20 +54,7 @@ export default function VolunteerList({ currentUserId, onVolunteerClick }: Volun
       subscription.unsubscribe();
       clearInterval(interval);
     };
-  }, []);
-
-  const fetchVolunteers = async () => {
-    const { data, error } = await supabase
-      .from('volunteers')
-      .select('*')
-      .order('display_name', { ascending: true });
-
-    if (error) {
-      console.error('Error fetching volunteers:', error);
-    } else {
-      setVolunteers(data || []);
-    }
-  };
+  }, [supabase]);
 
   const isOnline = (lastSeen: string | null) => {
     if (!lastSeen) return false;

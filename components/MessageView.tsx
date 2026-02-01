@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { Message, Conversation } from '@/lib/types';
 
@@ -31,8 +31,38 @@ export default function MessageView({
   // Create singleton Supabase client to prevent AbortError from React Strict Mode
   const supabase = useMemo(() => createClient(), []);
 
-  useEffect(() => {
+  const fetchConversation = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('conversations')
+      .select('*')
+      .eq('id', conversationId)
+      .single();
 
+    if (error) {
+      console.error('Error fetching conversation:', error);
+    } else if (data) {
+      const conversationData = data as Conversation;
+      setConversation(conversationData);
+      setEditedName(conversationData.contact_name || '');
+    }
+  }, [supabase, conversationId]);
+
+  const fetchMessages = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*, volunteers:volunteer_id(display_name)')
+      .eq('conversation_id', conversationId)
+      .neq('status', 'superseded')  // Filter out superseded messages
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching messages:', error);
+    } else {
+      setMessages(data || []);
+    }
+  }, [supabase, conversationId]);
+
+  useEffect(() => {
     fetchConversation();
     fetchMessages();
 
@@ -56,42 +86,11 @@ export default function MessageView({
     return () => {
       subscription.unsubscribe();
     };
-  }, [conversationId]);
+  }, [conversationId, fetchConversation, fetchMessages, supabase]);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-
-  const fetchConversation = async () => {
-    const { data, error } = await supabase
-      .from('conversations')
-      .select('*')
-      .eq('id', conversationId)
-      .single();
-
-    if (error) {
-      console.error('Error fetching conversation:', error);
-    } else if (data) {
-      const conversationData = data as Conversation;
-      setConversation(conversationData);
-      setEditedName(conversationData.contact_name || '');
-    }
-  };
-
-  const fetchMessages = async () => {
-    const { data, error } = await supabase
-      .from('messages')
-      .select('*, volunteers:volunteer_id(display_name)')
-      .eq('conversation_id', conversationId)
-      .neq('status', 'superseded')  // Filter out superseded messages
-      .order('created_at', { ascending: true });
-
-    if (error) {
-      console.error('Error fetching messages:', error);
-    } else {
-      setMessages(data || []);
-    }
-  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
