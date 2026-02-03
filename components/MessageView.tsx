@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { Message, Conversation } from '@/lib/types';
+import { getLanguageName } from '@/lib/languages';
 
 // Extended type for message with joined volunteer data
 interface MessageWithVolunteer extends Message {
@@ -251,7 +252,7 @@ export default function MessageView({
                   </button>
                   {conversation.detected_language !== 'en' && (
                     <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded">
-                      {conversation.detected_language.toUpperCase()}
+                      {getLanguageName(conversation.detected_language)}
                     </span>
                   )}
                 </div>
@@ -274,7 +275,7 @@ export default function MessageView({
                 {message.translated_text && message.direction === 'inbound' && (
                   <>
                     <p className="text-sm opacity-75 italic mb-1">
-                      Original: {message.original_text}
+                      Original ({getLanguageName(message.detected_language)}): {message.original_text}
                     </p>
                     <p>{message.translated_text}</p>
                   </>
@@ -341,7 +342,7 @@ export default function MessageView({
         </form>
         {conversation.detected_language !== 'en' && (
           <p className="text-xs text-gray-500 mt-2">
-            Your message will be translated to {conversation.detected_language.toUpperCase()}
+            Your message will be translated to {getLanguageName(conversation.detected_language)}
           </p>
         )}
       </div>
