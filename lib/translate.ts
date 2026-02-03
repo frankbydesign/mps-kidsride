@@ -21,18 +21,33 @@ export async function detectLanguage(text: string): Promise<string> {
       messages: [
         {
           role: 'user',
-          content: `Detect the language of this text and respond with ONLY the ISO 639-1 language code (e.g., "en" for English, "es" for Spanish, "so" for Somali, "ar" for Arabic). Text: "${text}"`
+          content: `Detect the language of this text and respond with ONLY the two-letter ISO 639-1 language code. Do not include quotes, punctuation, or explanations. Examples: en for English, es for Spanish, so for Somali, ar for Arabic. Text: "${text}"`
         }
       ]
     });
 
     const response = message.content[0];
     if (response.type === 'text') {
-      const languageCode = response.text.trim().toLowerCase();
-      // Return the detected language code, default to 'en' if unclear
-      return languageCode.match(/^[a-z]{2}$/) ? languageCode : 'en';
+      // Clean the response: trim, lowercase, remove quotes and common punctuation
+      const languageCode = response.text
+        .trim()
+        .toLowerCase()
+        .replace(/^["']|["']$/g, '') // Remove leading/trailing quotes
+        .replace(/[.,;:!?]/g, '');    // Remove punctuation
+
+      console.log(`Language detection raw response: "${response.text}" -> cleaned: "${languageCode}"`);
+
+      // Validate it's a proper 2-letter code
+      if (languageCode.match(/^[a-z]{2}$/)) {
+        return languageCode;
+      }
+
+      // Log warning if validation failed
+      console.warn(`Language detection returned invalid code: "${response.text}" (cleaned: "${languageCode}"), defaulting to 'en'`);
+      return 'en';
     }
 
+    console.warn('Language detection response was not text type, defaulting to en');
     return 'en';
   } catch (error) {
     console.error('Language detection error:', error);
