@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { Conversation } from '@/lib/types';
+import { getLanguageName } from '@/lib/languages';
 
 // Extended type for conversation with joined volunteer data
 interface ConversationWithVolunteer extends Conversation {
@@ -133,7 +134,7 @@ export default function ConversationList({
                 </h3>
                 {conversation.detected_language !== 'en' && (
                   <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded">
-                    {conversation.detected_language.toUpperCase()}
+                    {getLanguageName(conversation.detected_language)}
                   </span>
                 )}
               </div>
