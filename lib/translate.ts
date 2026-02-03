@@ -104,14 +104,15 @@ export async function translateMessage(
       messages: [
         {
           role: 'user',
-          content: `Translate this text from ${sourceName} to ${targetName}. Respond with ONLY the translated text, no explanations or additional context. Text to translate: "${text}"`
+          content: `Translate this text from ${sourceName} to ${targetName}. Respond with ONLY the translated text, no explanations or additional context. Do not wrap the translation in quotes. Text to translate: "${text}"`
         }
       ]
     });
 
     const response = message.content[0];
     if (response.type === 'text') {
-      return response.text.trim();
+      return response.text.trim()
+        .replace(/^["'""\u201C\u201D]/g, '').replace(/["'""\u201C\u201D]$/g, '');
     }
 
     return text; // Return original if translation fails
