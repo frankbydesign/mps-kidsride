@@ -21,7 +21,7 @@ export async function detectLanguage(text: string): Promise<string> {
       messages: [
         {
           role: 'user',
-          content: `Detect the language of this text and respond with ONLY the two-letter ISO 639-1 language code. Do not include quotes, punctuation, or explanations. Examples: en for English, es for Spanish, so for Somali, ar for Arabic. Text: "${text}"`
+          content: `Detect the language of this text and respond with ONLY the ISO language code. Use 2-letter ISO 639-1 codes when available (es, ar, zh), or 3-letter ISO 639-3 codes for languages without a 2-letter code (hmn for Hmong, kar for Karen). Do not include quotes, punctuation, or explanations. Examples: en for English, es for Spanish, so for Somali, ar for Arabic, hmn for Hmong. Text: "${text}"`
         }
       ]
     });
@@ -37,8 +37,8 @@ export async function detectLanguage(text: string): Promise<string> {
 
       console.log(`Language detection raw response: "${response.text}" -> cleaned: "${languageCode}"`);
 
-      // Validate it's a proper 2-letter code
-      if (languageCode.match(/^[a-z]{2}$/)) {
+      // Validate it's a proper 2 or 3-letter code
+      if (languageCode.match(/^[a-z]{2,3}$/)) {
         return languageCode;
       }
 
