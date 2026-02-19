@@ -8,6 +8,8 @@ This folder contains all SQL migration files for the MPS KidsRide project. Migra
 - `002_volunteer_approval.sql` - Adds volunteer approval workflow
 - `003_fix_approval_bugs.sql` - Fixes approval-related bugs
 - `004_superseded_status.sql` - Adds superseded status functionality
+- `005_reopen_resolved_conversations.sql` - Fixes resolved conversation reopening
+- `006_vehicle_fields.sql` - Adds vehicle info columns to volunteers
 
 ## Running Migrations
 
@@ -15,7 +17,7 @@ This folder contains all SQL migration files for the MPS KidsRide project. Migra
 
 1. Create a new Supabase project or access your existing project
 2. Navigate to the SQL Editor in your Supabase dashboard
-3. Run each migration file **in numerical order** (001, 002, 003, 004)
+3. Run each migration file **in numerical order** (001, 002, 003, 004, 005, 006)
 4. Copy and paste the contents of each file into the SQL Editor
 5. Execute each migration and verify it completes successfully before proceeding to the next
 
