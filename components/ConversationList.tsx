@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { Conversation } from '@/lib/types';
 import { getLanguageName } from '@/lib/languages';
@@ -9,6 +9,8 @@ import { getLanguageName } from '@/lib/languages';
 interface ConversationWithVolunteer extends Conversation {
   volunteers?: { display_name: string };
 }
+
+type Tab = 'active' | 'resolved';
 
 interface ConversationListProps {
   selectedId: string | null;
@@ -21,12 +23,35 @@ export default function ConversationList({
 }: ConversationListProps) {
   const [conversations, setConversations] = useState<ConversationWithVolunteer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<Tab>('active');
 
   // Create singleton Supabase client to prevent AbortError from React Strict Mode
   const supabase = useMemo(() => createClient(), []);
 
+  const fetchConversations = useCallback(async (tab: Tab) => {
+    let query = supabase
+      .from('conversations')
+      .select('*, volunteers:last_reply_by(display_name)');
+
+    if (tab === 'resolved') {
+      query = query.eq('status', 'resolved');
+    } else {
+      query = query.neq('status', 'resolved');
+    }
+
+    const { data, error } = await query
+      .order('last_reply_at', { ascending: false, nullsFirst: false });
+
+    if (error) {
+      console.error('Error fetching conversations:', error);
+    } else {
+      setConversations(data || []);
+    }
+    setLoading(false);
+  }, [supabase]);
+
   useEffect(() => {
-    fetchConversations();
+    fetchConversations(activeTab);
 
     // Subscribe to conversation changes
     const subscription = supabase
@@ -39,7 +64,7 @@ export default function ConversationList({
           table: 'conversations'
         },
         () => {
-          fetchConversations();
+          fetchConversations(activeTab);
         }
       )
       .subscribe();
@@ -47,22 +72,7 @@ export default function ConversationList({
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
-
-  const fetchConversations = async () => {
-    const { data, error } = await supabase
-      .from('conversations')
-      .select('*, volunteers:last_reply_by(display_name)')
-      .neq('status', 'resolved')
-      .order('last_reply_at', { ascending: false, nullsFirst: false });
-
-    if (error) {
-      console.error('Error fetching conversations:', error);
-    } else {
-      setConversations(data || []);
-    }
-    setLoading(false);
-  };
+  }, [activeTab, fetchConversations, supabase]);
 
   const handleResolve = async (id: string) => {
     const { error } = await supabase
@@ -73,11 +83,16 @@ export default function ConversationList({
     if (error) {
       console.error('Error resolving conversation:', error);
     } else {
-      fetchConversations();
+      fetchConversations(activeTab);
       if (selectedId === id) {
         onSelect('');
       }
     }
+  };
+
+  const handleTabChange = (tab: Tab) => {
+    setActiveTab(tab);
+    setLoading(true);
   };
 
   const formatTime = (timestamp: string) => {
@@ -95,77 +110,106 @@ export default function ConversationList({
     return date.toLocaleDateString();
   };
 
-  if (loading) {
-    return (
-      <div className="flex-1 flex items-center justify-center p-4">
-        <div className="text-gray-500">Loading...</div>
-      </div>
-    );
-  }
-
-  if (conversations.length === 0) {
-    return (
-      <div className="flex-1 flex items-center justify-center p-4">
-        <div className="text-center text-gray-500">
-          <p>No active conversations</p>
-          <p className="text-sm mt-1">
-            Messages will appear here when parents text
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex-1 overflow-y-auto">
-      {conversations.map((conversation) => (
-        <div
-          key={conversation.id}
-          className={`p-4 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors ${
-            selectedId === conversation.id ? 'bg-blue-50' : ''
+    <div className="flex-1 flex flex-col min-h-0">
+      {/* Tabs */}
+      <div className="flex border-b border-gray-200">
+        <button
+          onClick={() => handleTabChange('active')}
+          className={`flex-1 py-2 px-4 text-sm font-medium text-center transition-colors ${
+            activeTab === 'active'
+              ? 'text-blue-600 border-b-2 border-blue-600'
+              : 'text-gray-500 hover:text-gray-700'
           }`}
-          onClick={() => onSelect(conversation.id)}
         >
-          <div className="flex items-start justify-between">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-gray-900 truncate">
-                  {conversation.contact_name}
-                </h3>
-                {conversation.detected_language !== 'en' && (
-                  <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded">
-                    {getLanguageName(conversation.detected_language)}
-                  </span>
-                )}
-              </div>
-              <p className="text-sm text-gray-500 mt-1">
-                {conversation.phone_number}
-              </p>
-              {conversation.volunteers && (
-                <p className="text-xs text-gray-400 mt-1">
-                  Last reply: {conversation.volunteers.display_name}
+          Active
+        </button>
+        <button
+          onClick={() => handleTabChange('resolved')}
+          className={`flex-1 py-2 px-4 text-sm font-medium text-center transition-colors ${
+            activeTab === 'resolved'
+              ? 'text-blue-600 border-b-2 border-blue-600'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          Resolved
+        </button>
+      </div>
+
+      {/* Content */}
+      {loading ? (
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="text-gray-500">Loading...</div>
+        </div>
+      ) : conversations.length === 0 ? (
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="text-center text-gray-500">
+            {activeTab === 'active' ? (
+              <>
+                <p>No active conversations</p>
+                <p className="text-sm mt-1">
+                  Messages will appear here when parents text
                 </p>
-              )}
-            </div>
-            <div className="flex flex-col items-end gap-2 ml-2">
-              {conversation.last_reply_at && (
-                <span className="text-xs text-gray-500">
-                  {formatTime(conversation.last_reply_at)}
-                </span>
-              )}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleResolve(conversation.id);
-                }}
-                className="text-xs text-green-600 hover:text-green-800 transition-colors"
-              >
-                Resolve
-              </button>
-            </div>
+              </>
+            ) : (
+              <p>No resolved conversations</p>
+            )}
           </div>
         </div>
-      ))}
+      ) : (
+        <div className="flex-1 overflow-y-auto">
+          {conversations.map((conversation) => (
+            <div
+              key={conversation.id}
+              className={`p-4 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors ${
+                selectedId === conversation.id ? 'bg-blue-50' : ''
+              }`}
+              onClick={() => onSelect(conversation.id)}
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold text-gray-900 truncate">
+                      {conversation.contact_name}
+                    </h3>
+                    {conversation.detected_language !== 'en' && (
+                      <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded">
+                        {getLanguageName(conversation.detected_language)}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {conversation.phone_number}
+                  </p>
+                  {conversation.volunteers && (
+                    <p className="text-xs text-gray-400 mt-1">
+                      Last reply: {conversation.volunteers.display_name}
+                    </p>
+                  )}
+                </div>
+                <div className="flex flex-col items-end gap-2 ml-2">
+                  {conversation.last_reply_at && (
+                    <span className="text-xs text-gray-500">
+                      {formatTime(conversation.last_reply_at)}
+                    </span>
+                  )}
+                  {activeTab === 'active' && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleResolve(conversation.id);
+                      }}
+                      className="text-xs text-green-600 hover:text-green-800 transition-colors"
+                    >
+                      Resolve
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
