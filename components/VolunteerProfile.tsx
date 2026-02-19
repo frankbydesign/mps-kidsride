@@ -9,6 +9,7 @@ interface VolunteerProfileProps {
   isOpen: boolean;
   onClose: () => void;
   onUpdate: (updated: Volunteer) => void;
+  onDelete?: () => void;
   currentUserId: string;
   currentUserIsAdmin: boolean;
 }
@@ -43,6 +44,7 @@ export default function VolunteerProfile({
   isOpen,
   onClose,
   onUpdate,
+  onDelete,
   currentUserId,
   currentUserIsAdmin,
 }: VolunteerProfileProps) {
@@ -52,11 +54,17 @@ export default function VolunteerProfile({
     car_make: '', car_color: '', license_plate: '',
   });
   const [saving, setSaving] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const supabase = useMemo(() => createClient(), []);
 
-  // Reset edit mode when volunteer changes or panel closes
+  // Reset state when volunteer changes or panel closes
   useEffect(() => {
     setEditing(false);
+    setConfirmingDelete(false);
+    setDeleting(false);
+    setDeleteError(null);
     if (volunteer) setForm(toFormData(volunteer));
   }, [volunteer?.id, isOpen]);
 
@@ -70,6 +78,7 @@ export default function VolunteerProfile({
 
   const online = isOnline(volunteer.last_seen);
   const canEdit = currentUserIsAdmin || volunteer.id === currentUserId;
+  const canDelete = currentUserIsAdmin && volunteer.id !== currentUserId;
   const panelTitle = volunteer.is_admin ? 'Administrator Profile' : 'Volunteer Profile';
 
   const handleSave = async () => {
@@ -104,6 +113,28 @@ export default function VolunteerProfile({
 
   const handleChange = (key: EditableKey, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      const res = await fetch('/api/admin/delete-volunteer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ volunteerId: volunteer!.id }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setDeleteError(data.error || 'Failed to delete volunteer');
+        setDeleting(false);
+        return;
+      }
+      onDelete?.();
+    } catch {
+      setDeleteError('Network error. Please try again.');
+      setDeleting(false);
+    }
   };
 
   const renderField = (key: EditableKey, label: string) => {
@@ -189,14 +220,24 @@ export default function VolunteerProfile({
 
           {EDITABLE_FIELDS.map(({ key, label }) => renderField(key, label))}
 
-          {/* Edit / Save / Cancel buttons */}
-          {canEdit && !editing && (
-            <button
-              onClick={() => { setForm(toFormData(volunteer)); setEditing(true); }}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm"
-            >
-              Edit Profile
-            </button>
+          {/* Edit / Delete / Save / Cancel buttons */}
+          {canEdit && !editing && !confirmingDelete && (
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setForm(toFormData(volunteer)); setEditing(true); }}
+                className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm"
+              >
+                Edit Profile
+              </button>
+              {canDelete && (
+                <button
+                  onClick={() => setConfirmingDelete(true)}
+                  className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-red-700 transition-colors text-sm"
+                >
+                  Delete Volunteer
+                </button>
+              )}
+            </div>
           )}
           {editing && (
             <div className="flex gap-3">
@@ -214,6 +255,32 @@ export default function VolunteerProfile({
               >
                 Cancel
               </button>
+            </div>
+          )}
+          {confirmingDelete && (
+            <div className="space-y-3">
+              <p className="text-sm text-red-600 font-medium">
+                Are you sure? This cannot be undone.
+              </p>
+              {deleteError && (
+                <p className="text-sm text-red-500">{deleteError}</p>
+              )}
+              <div className="flex gap-3">
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-red-700 disabled:opacity-50 transition-colors text-sm"
+                >
+                  {deleting ? 'Deleting...' : 'Confirm'}
+                </button>
+                <button
+                  onClick={() => { setConfirmingDelete(false); setDeleteError(null); }}
+                  disabled={deleting}
+                  className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-300 disabled:opacity-50 transition-colors text-sm"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           )}
         </div>

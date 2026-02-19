@@ -241,6 +241,7 @@ export default function Dashboard({ volunteer, userId }: DashboardProps) {
           isOpen={selectedVolunteer !== null}
           onClose={() => setSelectedVolunteer(null)}
           onUpdate={(updated) => setSelectedVolunteer(updated)}
+          onDelete={() => setSelectedVolunteer(null)}
           currentUserId={userId}
           currentUserIsAdmin={currentVolunteer.is_admin}
         />
