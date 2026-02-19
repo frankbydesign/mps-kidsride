@@ -240,6 +240,8 @@ export default function Dashboard({ volunteer, userId }: DashboardProps) {
           volunteer={selectedVolunteer}
           isOpen={selectedVolunteer !== null}
           onClose={() => setSelectedVolunteer(null)}
+          currentUserId={userId}
+          currentUserIsAdmin={currentVolunteer.is_admin}
         />
       </div>
 

@@ -17,6 +17,9 @@ export interface Volunteer {
   is_admin: boolean;
   last_seen: string | null;
   created_at: string;
+  car_make: string | null;
+  car_color: string | null;
+  license_plate: string | null;
 }
 
 // Conversation table (one per phone number that texts in)
