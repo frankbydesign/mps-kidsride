@@ -8,6 +8,7 @@ interface VolunteerProfileProps {
   volunteer: Volunteer | null;
   isOpen: boolean;
   onClose: () => void;
+  onUpdate: (updated: Volunteer) => void;
   currentUserId: string;
   currentUserIsAdmin: boolean;
 }
@@ -41,6 +42,7 @@ export default function VolunteerProfile({
   volunteer,
   isOpen,
   onClose,
+  onUpdate,
   currentUserId,
   currentUserIsAdmin,
 }: VolunteerProfileProps) {
@@ -72,7 +74,7 @@ export default function VolunteerProfile({
 
   const handleSave = async () => {
     setSaving(true);
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('volunteers')
       .update({
         display_name: form.display_name.trim() || null,
@@ -82,13 +84,16 @@ export default function VolunteerProfile({
         car_color: form.car_color.trim() || null,
         license_plate: form.license_plate.trim() || null,
       })
-      .eq('id', volunteer.id);
+      .eq('id', volunteer.id)
+      .select()
+      .single();
     setSaving(false);
 
     if (error) {
       console.error('Error updating volunteer:', error);
       return;
     }
+    onUpdate(data as Volunteer);
     setEditing(false);
   };
 
