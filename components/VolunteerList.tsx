@@ -88,6 +88,9 @@ export default function VolunteerList({ currentUserId, onVolunteerClick }: Volun
               />
               <span className="text-sm text-gray-700">
                 {volunteer.display_name || volunteer.email}
+                {volunteer.is_admin && (
+                  <span className="text-xs bg-blue-100 text-blue-700 rounded px-1 ml-1">Admin</span>
+                )}
                 {isCurrentUser && (
                   <span className="text-gray-500 ml-1">(you)</span>
                 )}
