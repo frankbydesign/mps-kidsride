@@ -126,10 +126,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Database error' }, { status: 500 });
     }
 
-    // Update conversation's last message time
+    // Update conversation's last message time and re-open if resolved
+    const conversationUpdate: Record<string, string> = {
+      last_reply_at: new Date().toISOString()
+    };
+    if (conversationData.status === 'resolved') {
+      conversationUpdate.status = 'active';
+    }
     await supabaseAdmin
       .from('conversations')
-      .update({ last_reply_at: new Date().toISOString() } as never)
+      .update(conversationUpdate as never)
       .eq('id', conversationData.id);
 
     // Return TwiML response
